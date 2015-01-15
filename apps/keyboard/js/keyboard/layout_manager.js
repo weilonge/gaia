@@ -477,6 +477,9 @@ LayoutManager.prototype._getAlternativeLayoutName = function(basicInputType,
         case 'numeric':
           return 'numberLayout';
 
+        case 'tel':
+          return 'telLayout';
+
         case '-moz-sms':
           var smsLayoutName = this.currentLayoutName + '-sms';
           if (this.loader.getLayout(smsLayoutName)) {
