@@ -146,7 +146,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
     this.node.classList.add('emergency');
     LazyL10n.get(function localized(_) {
       self.replacePhoneNumber(number, 'end');
-      self._cachedInfo = number;
+      //self._cachedInfo = number;
       self.replaceAdditionalContactInfo(_('emergencyNumber'));
       self._cachedAdditionalInfo = _('emergencyNumber');
     });
@@ -174,7 +174,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
       self._iccCallMessage = callMessageReq.result['icc.callmessage'];
       if (self._iccCallMessage) {
         self.replacePhoneNumber(self._iccCallMessage, 'end');
-        self._cachedInfo = self._iccCallMessage;
+        //self._cachedInfo = self._iccCallMessage;
         navigator.mozSettings.createLock().set({'icc.callmessage': null});
       }
     };
@@ -204,6 +204,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
       self._cachedAdditionalInfo =
         Utils.getPhoneNumberAndType(matchingTel);
       self.replaceAdditionalContactInfo(self._cachedAdditionalInfo);
+      console.log('DEBUG_LOG lookupContact A');
       self.formatPhoneNumber('end');
       var photo = ContactPhotoHelper.getFullResolution(contact);
       if (photo) {
@@ -220,6 +221,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
     self._cachedInfo = number;
     node.textContent = self._cachedInfo;
     self.replaceAdditionalContactInfo(self._cachedAdditionalInfo);
+    console.log('DEBUG_LOG lookupContact B');
     self.formatPhoneNumber('end');
   }
 };
@@ -243,6 +245,8 @@ HandledCall.prototype.restoreAdditionalContactInfo =
 
 HandledCall.prototype.formatPhoneNumber =
   function hc_formatPhoneNumber(ellipsisSide) {
+    var tag = Date.now();
+    console.log('DEBUG_LOG formatPhoneNumber START ' + tag);
     if (this._removed) {
       return;
     }
@@ -270,17 +274,21 @@ HandledCall.prototype.formatPhoneNumber =
     } else {
       FontSizeManager.resetFixedBaseline(this.numberNode);
     }
+    console.log('DEBUG_LOG formatPhoneNumber  END  ' + tag);
 };
 
 HandledCall.prototype.replacePhoneNumber =
   function hc_replacePhoneNumber(phoneNumber, ellipsisSide) {
     this.numberNode.textContent = phoneNumber;
+    this._cachedInfo = phoneNumber;
+    console.log('DEBUG_LOG replacePhoneNumber');
     this.formatPhoneNumber(ellipsisSide);
 };
 
 HandledCall.prototype.restorePhoneNumber =
   function hc_restorePhoneNumber() {
     this.numberNode.textContent = this._cachedInfo;
+    console.log('DEBUG_LOG restorePhoneNumber');
     this.formatPhoneNumber('end');
 };
 
