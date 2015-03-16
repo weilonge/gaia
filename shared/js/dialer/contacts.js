@@ -11,6 +11,35 @@ var Contacts = {
     '/shared/js/fb/fb_reader_utils.js'
   ],
 
+  _calledNumberCache: [],
+
+  CACHE_SIZE: 10,
+
+  _calledNumberCachePush: function (number, contact, matchingTel) {
+    if (this._calledNumberCache.length > this.CACHE_SIZE) {
+      this._calledNumberCache.shift();
+    }
+    this._calledNumberCache.push({
+      number: number,
+      contact: contact,
+      matchingTel: matchingTel
+    });
+    var self = this;
+    setTimeout(function () {
+      asyncStorage.setItem('contactsCache', JSON.stringify(self._calledNumberCache));
+    },0);
+  },
+
+  _calledNumberCacheGet: function (number) {
+    for (var i = 0; i < this._calledNumberCache.length; i++) {
+      if (this._calledNumberCache[i] &&
+        number === this._calledNumberCache[i].number) {
+        return this._calledNumberCache[i];
+      }
+    }
+    return null;
+  },
+
   // The mozContact API stores a revision of its database that allow us to know
   // if we have a proper and updated contact cache.
   getRevision: function getRevision(callback) {
@@ -41,8 +70,15 @@ var Contacts = {
       return;
     }
 
+    var cachedContact = this._calledNumberCacheGet(number);
+    if (cachedContact) {
+      callback(cachedContact.contact, cachedContact.matchingTel);
+      return ;
+    }
+
     var options;
     var variants;
+    var self = this;
 
     // Based on E.164 (http://en.wikipedia.org/wiki/E.164)
     // if length < 7 we're dealing with a short number
@@ -88,6 +124,8 @@ var Contacts = {
               carrier: null
             };
           }
+
+          self._calledNumberCachePush(number, finalContact, objMatching);
           callback(finalContact, objMatching);
         }, function fb_err(err) {
           callback(null);
@@ -116,14 +154,17 @@ var Contacts = {
         // Merge with the FB data
         var req = fb.getData(contact);
         req.onsuccess = function() {
+          self._calledNumberCachePush(number, req.result, matchingTel);
           callback(req.result, matchingTel, contactsWithSameNumber);
         };
         req.onerror = function() {
           window.console.error('Error while getting FB Data');
+          self._calledNumberCachePush(number, contact, matchingTel);
           callback(contact, matchingTel, contactsWithSameNumber);
         };
       }
       else {
+        self._calledNumberCachePush(number, contact, matchingTel);
         callback(contact, matchingTel, contactsWithSameNumber);
       }
     };
@@ -233,3 +274,14 @@ var Contacts = {
     }
   }
 };
+
+window.addEventListener("load", function (event) {
+  asyncStorage.getItem('contactsCache', function (value) {
+    if(value) {
+      Contacts._calledNumberCache = JSON.parse(value);
+    }
+  });
+  window.LazyL10n.get(function () {
+    console.log('LazyL10n is loaded.');
+  });
+});
