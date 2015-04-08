@@ -61,7 +61,7 @@ CameraController.prototype.bindEvents = function() {
   camera.on('error', app.firer('camera:error'));
   camera.on('ready', app.firer('ready'));
   camera.on('busy', app.firer('busy'));
-
+  camera.on('capture', app.firer('capture'));
   // App
   app.on('viewfinder:focuspointchanged', this.onFocusPointChanged);
   app.on('change:batteryStatus', this.onBatteryStatusChange);
@@ -76,7 +76,8 @@ CameraController.prototype.bindEvents = function() {
   app.on('visible', this.onVisible);
   app.on('capture', this.capture);
   app.on('hidden', this.shutdownCamera);
-
+  app.on('newfilepath', this.continuousShot);
+  app.on('captureRelease', this.burstModeStop);
   // Settings
   settings.recorderProfiles.on('change:selected', this.updateRecorderProfile);
   settings.pictureSizes.on('change:selected', this.updatePictureSize);
@@ -173,6 +174,19 @@ CameraController.prototype.capture = function() {
   this.camera.capture({ position: position });
 };
 
+CameraController.prototype.continuousShot = function (filepath) {
+  //filepath
+  var position = this.app.geolocation.position;
+  this.camera.filepath = filepath;
+  this.camera.burstMode = true;
+  this.camera.capture({ position: position});
+}
+
+CameraController.prototype.burstModeStop = function (argument) {
+  this.camera.burstMode = false;
+  this.camera.burstSeq = 0;
+  this.camera.filepath = null;
+}
 /**
  * Fires a 'startcountdown' event if:
  * A timer settings is set, no timer is

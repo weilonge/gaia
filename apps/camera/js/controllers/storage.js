@@ -65,6 +65,7 @@ StorageController.prototype.bindEvents = function() {
   this.app.on('camera:newimage', this.storePicture);
   this.app.on('camera:newvideo', this.storeVideo);
   this.app.on('visible', this.storage.check);
+  this.app.on('captureHold', this.generateFilePath);
 
   // Storage
   this.storage.on('volumechanged', this.app.firer('storage:volumechanged'));
@@ -121,7 +122,7 @@ StorageController.prototype.storePicture = function(picture) {
   var self = this;
 
   this.storage.addPicture(
-    memoryBlob,
+    memoryBlob,{filepath: picture.filepath},
     function(error, filepath, abspath, fileBlob) {
       picture.blob = fileBlob;
       picture.filepath = filepath;
@@ -130,6 +131,14 @@ StorageController.prototype.storePicture = function(picture) {
   });
 };
 
+StorageController.prototype.generateFilePath = function  () {
+  var self = this;
+  function onCreated(filepath) {
+    self.app.emit('newfilepath', filepath);
+  }
+  var storage = navigator.getDeviceStorage('pictures');
+  this.storage.createFilename(storage, 'image', onCreated);
+}
 /**
  * Store a video.
  *

@@ -82,18 +82,23 @@ Storage.prototype.addPicture = function(blob, options, done) {
   // one hasn't been given.
   if (!filepath) {
     debug('creating filename');
+    console.log('pizza create filePath');
     this.createFilename(this.picture, 'image', onCreated);
   } else {
+    console.log('pizza use filePath:' + filepath);
     onCreated(filepath);
   }
 
   function onCreated(filepath) {
     var req = self.picture.addNamed(blob, filepath);
-    req.onerror = function() { self.emit('error'); };
+    req.onerror = function() { 
+      self.emit('error'); 
+      console.log('pizza save error');
+    };
     req.onsuccess = function(e) {
       debug('image stored', filepath);
       var absolutePath = e.target.result;
-
+      console.log('pizza save ok');
       // `addNamed` does not give us a File
       // handle so we need to get() it again.
       refetchFile(filepath, absolutePath);

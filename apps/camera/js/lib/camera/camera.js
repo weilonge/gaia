@@ -70,6 +70,9 @@ function Camera(options) {
 
   this.storage = options.storage || {};
 
+  this.burstMode = false;
+  this.burstSeq = 0;
+  this.filepath = null;
   // Video config
   this.video = {
     filepath: null,
@@ -773,6 +776,12 @@ Camera.prototype.takePicture = function(options) {
 
   function onSuccess(blob) {
     var image = { blob: blob };
+    if (self.burstMode) {
+      image.filepath = 
+                    self.filepath.replace('.jpg', '_' + self.burstSeq + '.jpg');
+      self.burstSeq = parseInt(self.burstSeq)
+      self.burstSeq += 1;
+    }
     self.resumePreview();
     self.set('focus', 'none');
     self.emit('newimage', image);
@@ -783,6 +792,9 @@ Camera.prototype.takePicture = function(options) {
   function complete() {
     self.set('focus', 'none');
     self.ready();
+    if (self.burstMode) {
+      self.emit('capture');
+    }
   }
 };
 

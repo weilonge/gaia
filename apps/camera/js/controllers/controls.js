@@ -52,6 +52,8 @@ ControlsController.prototype.bindEvents = function() {
   this.view.on('click:thumbnail', this.app.firer('preview'));
   this.view.on('click:cancel', this.onCancelButtonClick);
   this.view.on('click:capture', this.onCaptureClick);
+  this.view.on('buttonHold:capture', this.onCaptureHold);
+  this.view.on('buttonRelease:capture', this.onCaptureRelease);
 
   // Timer
   this.app.on('timer:started', this.onTimerStarted);
@@ -142,6 +144,16 @@ ControlsController.prototype.onceAppLoaded = function() {
 ControlsController.prototype.onCaptureClick = function() {
   this.captureHighlightOn();
   this.app.emit('capture');
+};
+
+ControlsController.prototype.onCaptureHold = function() {
+  this.captureHighlightOn();
+  this.app.emit('captureHold');
+};
+
+ControlsController.prototype.onCaptureRelease = function() {
+  this.onRecordingEnd();
+  this.app.emit('captureRelease');
 };
 
 /**
