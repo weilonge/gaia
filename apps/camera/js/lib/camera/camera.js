@@ -781,6 +781,7 @@ Camera.prototype.takePicture = function(options) {
                     self.filepath.replace('.jpg', '_' + self.burstSeq + '.jpg');
       self.burstSeq = parseInt(self.burstSeq)
       self.burstSeq += 1;
+      self.emit('updateburstcount', self.burstSeq);
     }
     self.resumePreview();
     self.set('focus', 'none');

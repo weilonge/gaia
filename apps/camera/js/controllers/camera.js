@@ -29,6 +29,7 @@ function CameraController(app) {
   this.hdrDisabled = this.settings.hdr.get('disabled');
   this.notification = app.views.notification;
   this.l10nGet = app.l10nGet;
+  this.notificationID = null;
   this.configure();
   this.bindEvents();
   debug('initialized');
@@ -62,6 +63,7 @@ CameraController.prototype.bindEvents = function() {
   camera.on('ready', app.firer('ready'));
   camera.on('busy', app.firer('busy'));
   camera.on('capture', app.firer('capture'));
+  camera.on('updateburstcount', this.updateNotification);
   // App
   app.on('viewfinder:focuspointchanged', this.onFocusPointChanged);
   app.on('change:batteryStatus', this.onBatteryStatusChange);
@@ -76,8 +78,8 @@ CameraController.prototype.bindEvents = function() {
   app.on('visible', this.onVisible);
   app.on('capture', this.capture);
   app.on('hidden', this.shutdownCamera);
-  app.on('newfilepath', this.continuousShot);
-  app.on('captureRelease', this.burstModeStop);
+  app.on('newfilepath', this.burstModeOn);
+  app.on('captureRelease', this.burstModeOff);
   // Settings
   settings.recorderProfiles.on('change:selected', this.updateRecorderProfile);
   settings.pictureSizes.on('change:selected', this.updatePictureSize);
@@ -174,18 +176,21 @@ CameraController.prototype.capture = function() {
   this.camera.capture({ position: position });
 };
 
-CameraController.prototype.continuousShot = function (filepath) {
-  //filepath
+CameraController.prototype.burstModeOn = function (filepath) {
   var position = this.app.geolocation.position;
   this.camera.filepath = filepath;
   this.camera.burstMode = true;
   this.camera.capture({ position: position});
 }
 
-CameraController.prototype.burstModeStop = function (argument) {
+CameraController.prototype.burstModeOff = function (argument) {
   this.camera.burstMode = false;
   this.camera.burstSeq = 0;
   this.camera.filepath = null;
+  if (this.notificationID !== null) {
+    this.notification.hide(this.notificationID);
+    this.notificationID = null;
+  }
 }
 /**
  * Fires a 'startcountdown' event if:
@@ -268,6 +273,10 @@ CameraController.prototype.setMode = function(mode) {
     self.camera.setMode(mode);
   });
 };
+
+CameraController.prototype.updateNotification = function (count) {
+  this.notificationID = this.notification.display({ text: count });
+}
 
 /**
  * Updates the camera's `pictureSize` to match
