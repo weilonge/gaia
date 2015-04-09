@@ -89,11 +89,12 @@ Storage.prototype.addPicture = function(blob, options, done) {
 
   function onCreated(filepath) {
     var req = self.picture.addNamed(blob, filepath);
-    req.onerror = function() { self.emit('error'); };
+    req.onerror = function() { 
+      self.emit('error'); 
+    };
     req.onsuccess = function(e) {
       debug('image stored', filepath);
       var absolutePath = e.target.result;
-
       // `addNamed` does not give us a File
       // handle so we need to get() it again.
       refetchFile(filepath, absolutePath);

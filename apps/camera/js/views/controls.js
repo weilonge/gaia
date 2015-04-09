@@ -75,6 +75,8 @@ module.exports = View.extend({
     bind(this.els.thumbnail, 'click', this.onButtonClick);
     bind(this.els.capture, 'click', this.onButtonClick);
     bind(this.els.cancel, 'click', this.onButtonClick);
+    bind(this.els.capture, 'contextmenu', this.onButtonHold);
+    bind(this.els.capture, 'touchend', this.onButtonRelease);
     return this;
   },
 
@@ -153,6 +155,20 @@ module.exports = View.extend({
    */
   setScreenReaderVisible: function(visible) {
     this.el.setAttribute('aria-hidden', !visible);
+  },
+
+  onButtonHold: function (e) {
+    e.stopPropagation();
+    debug('button long press');
+    var name = e.currentTarget.getAttribute('name');
+    this.emit('buttonHold:' + name, e);
+  },
+
+  onButtonRelease: function (e) {
+    e.stopPropagation();
+    debug('button long press leave');
+    var name = e.currentTarget.getAttribute('name');
+    this.emit('buttonRelease:' + name, e);
   },
 
   onButtonClick: function(e) {
