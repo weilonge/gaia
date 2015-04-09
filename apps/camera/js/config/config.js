@@ -349,6 +349,63 @@ module.exports = {
     notifications: false
   },
 
+  effects: {
+    title: 'effects',
+    header: 'effects-header',
+    icon: 'grid-circular',
+    options: [
+      { 
+        key: 'none',
+        title: 'none'
+      },
+      {
+        key: 'mono',
+        title: 'mono'
+      },
+      {
+        key: 'negative',
+        title: 'negative'
+      },
+      {
+        key: 'solarize',
+        title: 'solarize'
+      },
+      {
+        key: 'sepia',
+        title: 'sepia'
+      },
+      {
+        key: 'posterize',
+        title: 'posterize'
+      },
+      {
+        key: 'whiteboard',
+        title: 'whiteboard'
+      },
+      {
+        key: 'blackboard',
+        title: 'blackboard'
+      },
+      {
+        key: 'aqua',
+        title: 'aqua'
+      },
+      {
+        key: 'emboss',
+        title: 'emboss'
+      },
+      {
+        key: 'sketch',
+        title: 'sketch'
+      },
+      {
+        key: 'neon',
+        title: 'neon'
+      }
+    ],
+    persistent: false,
+  },
+
   settingsMenu: {
     items: [
       // {
@@ -368,6 +425,9 @@ module.exports = {
       // },
       {
         key: 'grid'
+      },
+      {
+        key: 'effects'
       }
     ]
   }

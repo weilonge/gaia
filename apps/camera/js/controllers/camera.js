@@ -89,6 +89,7 @@ CameraController.prototype.bindEvents = function() {
   settings.mode.on('change:selected', this.setMode);
   settings.hdr.on('change:selected', this.setHDR);
   settings.hdr.on('change:selected', this.onHDRChange);
+  settings.effects.on('change:selected', this.onEffectsChange);
 
   debug('events bound');
 };
@@ -420,6 +421,10 @@ CameraController.prototype.onHDRChange = function(hdr) {
   if (ishdrOn && flashMode !== 'off') {
     this.settings.flashModesPicture.select('off');
   }
+};
+
+CameraController.prototype.onEffectsChange = function() {
+  this.camera.setEffect(this.settings.effects.selected('key'));
 };
 
 CameraController.prototype.onBatteryStatusChange = function(status) {

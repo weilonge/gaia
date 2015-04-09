@@ -1310,6 +1310,14 @@ Camera.prototype.setSceneMode = function(value){
   }
 };
 
+Camera.prototype.setEffect = function(value){
+  var modes = this.mozCamera.capabilities.effects;
+  if (modes.indexOf(value) > -1) {
+    var preEffect = this.mozCamera.effect;
+    this.mozCamera.effect = value;
+  }
+};
+
 /**
  * Check if the hardware supports zoom.
  *
