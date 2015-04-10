@@ -131,6 +131,7 @@ CameraController.prototype.onSettingsConfigured = function() {
   this.setFlashMode();
   this.setISO();
   this.setHDR();
+  this.setEffect();
 
   this.camera.setRecorderProfile(recorderProfile);
   this.camera.setPictureSize(pictureSize);
@@ -407,6 +408,10 @@ CameraController.prototype.setHDR = function() {
   this.camera.setHDR(this.settings.hdr.selected('key'));
 };
 
+CameraController.prototype.setEffect = function() {
+  this.camera.setEffect(this.settings.effects.selected('key'));
+};
+
 CameraController.prototype.onFlashModeChange = function(flashModes) {
   if (this.hdrDisabled) { return; }
   var ishdrOn = this.settings.hdr.selected('key') === 'on';
@@ -424,7 +429,7 @@ CameraController.prototype.onHDRChange = function(hdr) {
 };
 
 CameraController.prototype.onEffectsChange = function() {
-  this.camera.setEffect(this.settings.effects.selected('key'));
+  this.setEffect();
 };
 
 CameraController.prototype.onBatteryStatusChange = function(status) {
