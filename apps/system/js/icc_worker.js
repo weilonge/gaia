@@ -73,7 +73,8 @@ var icc_worker = {
       if (STKHelper.isIconSelfExplanatory(options.confirmMessage)) {
         confirmMessage = '';
       }
-      icc.asyncConfirm(message, confirmMessage, options.confirmMessage.icons,
+      icc.asyncConfirm(message, confirmMessage,
+        (options.confirmMessage ? options.confirmMessage.icons : null),
         function(confirmed) {
           stkSetupCall(confirmed, callMessage);
         });
