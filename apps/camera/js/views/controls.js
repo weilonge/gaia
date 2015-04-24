@@ -47,10 +47,11 @@ module.exports = View.extend({
     this.els.capture = this.find('.js-capture');
     this.els.cancel = this.find('.js-cancel');
     this.els.switch = this.find('.js-switch');
-    this.els.icons = {
-      camera: this.find('.js-icon-camera'),
-      video: this.find('.js-icon-video')
-    };
+    this.els.record = this.find('.js-record');
+    // this.els.icons = {
+    //   camera: this.find('.js-capture.mode-video'),
+    //   video: this.find('.js-capture.mode-video')
+    // };
 
     // Clean up
     delete this.template;
@@ -77,6 +78,7 @@ module.exports = View.extend({
     bind(this.els.cancel, 'click', this.onButtonClick);
     bind(this.els.capture, 'contextmenu', this.onButtonHold);
     bind(this.els.capture, 'touchend', this.onButtonRelease);
+    bind(this.els.record, 'click', this.onButtonClick);
     return this;
   },
 
@@ -89,6 +91,7 @@ module.exports = View.extend({
    * @private
    */
   setupSwitch: function() {
+    return;
     debug('setup dragger');
 
     // Wait until the document is complete
@@ -179,6 +182,7 @@ module.exports = View.extend({
   },
 
   setMode: function(mode) {
+    return;
     debug('set mode: %s', mode);
     this.set('mode', mode);
     this.switchPosition = this.switchPositions[mode];
@@ -295,17 +299,24 @@ module.exports = View.extend({
       '</div>' +
     '</div>' +
     '<div class="controls-right">' +
-      '<div class="mode-switch test-switch" name="switch">' +
-        '<div class="inner js-switch">' +
-          '<div class="mode-switch_bg-icon rotates" data-icon="camera"></div>' +
-          '<div class="mode-switch_bg-icon rotates" data-icon="video"></div>' +
-          '<div class="mode-switch_handle js-switch-handle">' +
-            '<div class="mode-switch_current-icon camera rotates js-icon-camera" data-icon="camera"></div>' +
-            '<div class="mode-switch_current-icon video rotates js-icon-video" data-icon="video"></div>' +
-          '</div>' +
-        '</div>' +
+      '<div class="capture-button mode-video test-capture rotates js-record" name="record">' +
+        '<div class="circle outer-circle"></div>' +
+        '<div class="circle inner-circle"></div>' +
+        '<div class="center" data-icon="camera"></div>' +
       '</div>' +
     '</div>';
+    // '<div class="controls-right">' +
+    //   '<div class="mode-switch test-switch" name="switch">' +
+    //     '<div class="inner js-switch">' +
+    //       '<div class="mode-switch_bg-icon rotates" data-icon="camera"></div>' +
+    //       '<div class="mode-switch_bg-icon rotates" data-icon="video"></div>' +
+    //       '<div class="mode-switch_handle js-switch-handle">' +
+    //         '<div class="mode-switch_current-icon camera rotates js-icon-camera" data-icon="camera"></div>' +
+    //         '<div class="mode-switch_current-icon video rotates js-icon-video" data-icon="video"></div>' +
+    //       '</div>' +
+    //     '</div>' +
+    //   '</div>' +
+    // '</div>';
   }
 });
 

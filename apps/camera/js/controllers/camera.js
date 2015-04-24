@@ -168,14 +168,14 @@ CameraController.prototype.onPickActivity = function(data) {
  *
  * @private
  */
-CameraController.prototype.capture = function() {
+CameraController.prototype.capture = function(options) {
   if (this.shouldCountdown()) {
     this.app.emit('startcountdown');
     return;
   }
 
   var position = this.app.geolocation.position;
-  this.camera.capture({ position: position });
+  this.camera.capture({ position: position, mode: options.mode });
 };
 
 CameraController.prototype.burstModeOn = function (filepath) {

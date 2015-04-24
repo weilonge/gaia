@@ -336,7 +336,7 @@
  * mode=video
  */
 
-.controls.mode-video .inner-circle {
+.mode-video .inner-circle {
   position: relative;
 }
 
@@ -346,9 +346,9 @@
  * mode=vide & recording=true
  */
 
-.controls.mode-video .capture-button:active .inner-circle,
-.controls.mode-video.capture-active .capture-button .inner-circle,
-.controls.mode-video.recording .capture-button .inner-circle {
+.controls .capture-button.mode-video:active .inner-circle,
+.controls.capture-active .capture-button.mode-video .inner-circle,
+.controls.recording .capture-button.mode-video .inner-circle {
   background-color: #D92E2E;
 }
 
@@ -387,7 +387,7 @@
  *    technically this is a platform issue.
  */
 
-.controls.mode-video .capture-button .center:before {
+.controls .capture-button.mode-video .center:before {
   content: "";
   top: calc(50% - 1rem);
   left: calc(50% - 1rem);
@@ -404,9 +404,9 @@
  * mode-video & capture-active
  */
 
-.controls.mode-video .capture-button:active .center:before,
-.controls.mode-video.recording .capture-button .center:before,
-.controls.mode-video.capture-active .capture-button .center:before {
+.controls .capture-button.mode-video:active .center:before,
+.controls.recording .capture-button.mode-video .center:before,
+.controls.capture-active .capture-button.mode-video .center:before {
   border-radius: 3px;
   background-color: white;
 }

@@ -704,7 +704,8 @@ Camera.prototype.pickThumbnailSize = function(thumbnailSizes, pictureSize) {
  *  public
  */
 Camera.prototype.capture = function(options) {
-  switch (this.mode) {
+  console.log('pizza:' + options.mode);
+  switch (options.mode) {
     case 'picture': this.takePicture(options); break;
     case 'video': this.toggleRecording(options); break;
   }
@@ -720,6 +721,7 @@ Camera.prototype.capture = function(options) {
  * @param  {Object} options
  */
 Camera.prototype.takePicture = function(options) {
+  console.log('pizza takePicture');
   debug('take picture');
   this.busy();
 
@@ -760,6 +762,7 @@ Camera.prototype.takePicture = function(options) {
   }
 
   function onError(error) {
+    console.log('pizza error?!?!');
     var title = navigator.mozL10n.get('error-saving-title');
     var text = navigator.mozL10n.get('error-saving-text');
 
@@ -775,6 +778,7 @@ Camera.prototype.takePicture = function(options) {
   }
 
   function onSuccess(blob) {
+    console.log('pizza onSuccess?!?!');
     var image = { blob: blob };
     if (self.burstMode) {
       image.filepath = 

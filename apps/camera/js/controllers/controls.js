@@ -52,6 +52,7 @@ ControlsController.prototype.bindEvents = function() {
   this.view.on('click:thumbnail', this.app.firer('preview'));
   this.view.on('click:cancel', this.onCancelButtonClick);
   this.view.on('click:capture', this.onCaptureClick);
+  this.view.on('click:record', this.onRecordClick);
   this.view.on('buttonHold:capture', this.onCaptureHold);
   this.view.on('buttonRelease:capture', this.onCaptureRelease);
 
@@ -142,8 +143,11 @@ ControlsController.prototype.onceAppLoaded = function() {
  * @private
  */
 ControlsController.prototype.onCaptureClick = function() {
-  this.captureHighlightOn();
-  this.app.emit('capture');
+  this.startAction('picture');
+};
+
+ControlsController.prototype.onRecordClick = function() {
+  this.startAction('video');
 };
 
 ControlsController.prototype.onCaptureHold = function() {
@@ -156,6 +160,10 @@ ControlsController.prototype.onCaptureRelease = function() {
   this.app.emit('captureRelease');
 };
 
+ControlsController.prototype.startAction = function(mode) {
+  this.captureHighlightOn();
+  this.app.emit('capture', {mode:mode});
+};
 /**
  * Set the recording attribute on
  * the view to allow it to style
