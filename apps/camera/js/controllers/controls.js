@@ -24,6 +24,7 @@ module.exports.ControlsController = ControlsController;
 function ControlsController(app) {
   bindAll(this);
   this.app = app;
+  this.camera = app.camera;
   this.activity = app.activity;
   this.createView();
   this.bindEvents();
@@ -143,10 +144,18 @@ ControlsController.prototype.onceAppLoaded = function() {
  * @private
  */
 ControlsController.prototype.onCaptureClick = function() {
+  var recording = this.camera.get('recording');
+  if (recording) { 
+    //switch to `video-snapshot` mode
+    this.camera.setMode('video-snapshot');
+  } else {
+    this.camera.setMode('picture');
+  }
   this.startAction('picture');
 };
 
 ControlsController.prototype.onRecordClick = function() {
+  this.camera.setMode('video');
   this.startAction('video');
 };
 

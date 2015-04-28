@@ -312,6 +312,9 @@ Camera.prototype.formatCapabilities = function(capabilities) {
  */
 Camera.prototype.configure = function() {
   debug('configuring hardware...');
+  if (this.mode === 'video-snapshot') {
+    return;
+  }
   var self = this;
 
   // As soon as a request to configure
@@ -762,7 +765,6 @@ Camera.prototype.takePicture = function(options) {
   }
 
   function onError(error) {
-    console.log('pizza error?!?!');
     var title = navigator.mozL10n.get('error-saving-title');
     var text = navigator.mozL10n.get('error-saving-text');
 
@@ -778,7 +780,6 @@ Camera.prototype.takePicture = function(options) {
   }
 
   function onSuccess(blob) {
-    console.log('pizza onSuccess?!?!');
     var image = { blob: blob };
     if (self.burstMode) {
       image.filepath = 

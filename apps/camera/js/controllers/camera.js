@@ -446,6 +446,9 @@ CameraController.prototype.onBatteryStatusChange = function(status) {
  * @private
  */
 CameraController.prototype.onStorageChanged = function() {
+  if (this.camera.mode === 'video-snapshot') {
+    return;
+  }
   this.camera.stopRecording();
 };
 
