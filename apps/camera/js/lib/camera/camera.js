@@ -799,7 +799,7 @@ Camera.prototype.takePicture = function(options) {
     self.set('focus', 'none');
     self.ready();
     if (self.burstMode) {
-      self.emit('capture');
+      self.emit('capture', {mode: 'picture'});
     }
   }
 };

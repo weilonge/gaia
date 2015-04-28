@@ -182,7 +182,7 @@ CameraController.prototype.burstModeOn = function (filepath) {
   var position = this.app.geolocation.position;
   this.camera.filepath = filepath;
   this.camera.burstMode = true;
-  this.camera.capture({ position: position});
+  this.camera.capture({ position: position, mode: 'picture'});
 }
 
 CameraController.prototype.burstModeOff = function (argument) {
