@@ -82,6 +82,7 @@ HudController.prototype.bindEvents = function() {
   // subsequent events will be blocked for given time period.
   this.view.on('click:camera', debounce(this.onCameraClick, 500, true));
   this.view.on('click:settings', this.app.firer('settings:toggle'));
+  this.view.on('click:effects', this.app.firer('effects:toggle'));
   this.view.on('click:flash', this.onFlashClick);
 
   // Timer

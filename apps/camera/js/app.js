@@ -111,6 +111,7 @@ App.prototype.runControllers = function() {
   this.controllers.overlay(this);
   this.controllers.battery(this);
   this.controllers.settings(this);
+  this.controllers.effects(this);
   this.controllers.activity(this);
   this.controllers.camera(this);
   this.controllers.viewfinder(this);

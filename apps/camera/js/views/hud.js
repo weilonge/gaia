@@ -25,6 +25,7 @@ module.exports = View.extend({
     this.els.flash = this.find('.js-flash');
     this.els.camera = this.find('.js-camera');
     this.els.settings = this.find('.js-settings');
+    this.els.effects = this.find('.js-effects');
 
     // Clean up
     delete this.template;
@@ -37,6 +38,7 @@ module.exports = View.extend({
     bind(this.els.flash, 'click', this.onFlashClick);
     bind(this.els.camera, 'click', this.onCameraClick);
     bind(this.els.settings, 'click', this.onSettingsClick, true);
+    bind(this.els.effects, 'click', this.onEffectsClick, true);
     return this;
   },
 
@@ -88,8 +90,15 @@ module.exports = View.extend({
     this.emit('click:settings');
   },
 
+  onEffectsClick: function(event) {
+    event.stopPropagation();
+    this.emit('click:effects');
+  },
+
   template: function() {
-    return '<div role="button" class="hud_btn hud_camera rotates ' +
+    return '<div role="button" class="hud_btn hud_effects rotates ' +
+    'test-effects-toggle js-effects"></div>' +
+    '<div role="button" class="hud_btn hud_camera rotates ' +
       'test-camera-toggle js-camera"></div>' +
     '<div role="button" class="hud_btn hud_flash rotates test-flash-button ' +
       'js-flash"></div>' +

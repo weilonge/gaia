@@ -52,6 +52,7 @@ var app = window.app = new App({
     settings: require('controllers/settings'),
     activity: require('controllers/activity'),
     camera: require('controllers/camera'),
+    effects: require('controllers/effects'),
 
     // Lazy loaded controllers
     lazy: [

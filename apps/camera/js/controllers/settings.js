@@ -141,6 +141,7 @@ SettingsController.prototype.setupFlashModesAlias = function() {
 SettingsController.prototype.bindEvents = function() {
   this.app.on('localized', this.formatPictureSizeTitles);
   this.app.on('settings:toggle', this.toggleSettings);
+  //this.app.on('effects:toggle', this.toggleSettings);
   this.app.on('camera:newcamera', this.onNewCamera);
   this.app.on('activity:pick', this.onPickActivity);
 };
@@ -211,6 +212,7 @@ SettingsController.prototype.closeSettings = function(done) {
  * @private
  */
 SettingsController.prototype.onOptionTap = function(key, setting) {
+  console.log('pizza:' +  key + ':' + setting);
   var flashMode = this.settings.flashModesPicture.selected('key');
   var ishdrOn = setting.key === 'hdr' && key === 'on';
   var flashDeactivated = flashMode !== 'off' && ishdrOn;
