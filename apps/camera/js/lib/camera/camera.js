@@ -354,6 +354,7 @@ Camera.prototype.configure = function() {
   };
 
   // Configure the camera hardware
+  // to do add promise
   this.mozCamera.setConfiguration(mozCameraConfig)
     .then(onSuccess, onError);
   debug('mozCamera configuring', mozCameraConfig);
@@ -1203,8 +1204,8 @@ Camera.prototype.setMode = function(mode) {
   debug('setting mode to: %s', mode);
   if (this.isMode(mode)) { return; }
   this.mode = mode;
-  this.configure();
-  return this;
+  //this.configure();
+  return this.configure();
 };
 
 /**
