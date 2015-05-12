@@ -91,7 +91,9 @@ function Camera(options) {
 
   // Allow `configure` to be called multiple
   // times in the same frame, but only ever run once.
-  this.configure = debounce(this.configure);
+
+  // XXX TODO, debounce can't return promise fn
+  // this.configure = debounce(this.configure);
 
   debug('initialized');
 }
@@ -313,7 +315,7 @@ Camera.prototype.formatCapabilities = function(capabilities) {
 Camera.prototype.configure = function() {
   debug('configuring hardware...');
   if (this.mode === 'video-snapshot') {
-    return;
+    return Promise.resolve();
   }
   var self = this;
 
@@ -329,13 +331,13 @@ Camera.prototype.configure = function() {
   if (this.isBusy) {
     debug('defering configuration');
     this.once('ready', this.configure);
-    return;
+    return Promise.resolve();
   }
 
   // Exit here if there is no camera
   if (!this.mozCamera) {
     debug('no mozCamera');
-    return;
+    return Promise.resolve();
   }
 
   // In some extreme cases the mode can
@@ -355,24 +357,31 @@ Camera.prototype.configure = function() {
 
   // Configure the camera hardware
   // to do add promise
-  this.mozCamera.setConfiguration(mozCameraConfig)
+  return new Promise(function(resolve, reject) {
+    self.mozCamera.setConfiguration(mozCameraConfig)
     .then(onSuccess, onError);
-  debug('mozCamera configuring', mozCameraConfig);
+    debug('mozCamera configuring', mozCameraConfig);
 
-  function onSuccess(config) {
-    debug('configuration success');
-    if (!self.mozCamera) { return; }
-    self.updateConfig(config);
-    self.configureFocus();
-    self.emit('configured');
-    self.ready();
-  }
+    function onSuccess(config) {
+      debug('configuration success');
+      if (!self.mozCamera) { return; }
+      self.updateConfig(config);
+      self.configureFocus();
+      self.emit('configured');
+      self.ready();
+      console.log('Javascript mpizza onSuccess');
+      resolve();
+    }
 
-  function onError(err) {
-    debug('Error configuring camera');
-    self.configured = true;
-    self.ready();
-  }
+    function onError(err) {
+      debug('Error configuring camera');
+      self.configured = true;
+      self.ready();
+      console.log('Javascript mpizza onError');
+      reject();
+    }
+
+  });
 };
 
 Camera.prototype.configureFocus = function() {
@@ -1202,9 +1211,10 @@ Camera.prototype.setCamera = function(camera) {
  */
 Camera.prototype.setMode = function(mode) {
   debug('setting mode to: %s', mode);
-  if (this.isMode(mode)) { return; }
+  if (this.isMode(mode)) {
+    return Promise.resolve(); 
+  }
   this.mode = mode;
-  //this.configure();
   return this.configure();
 };
 

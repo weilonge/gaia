@@ -146,17 +146,14 @@ ControlsController.prototype.onceAppLoaded = function() {
 ControlsController.prototype.onCaptureClick = function() {
   var recording = this.camera.get('recording');
   if (recording) { 
-    //switch to `video-snapshot` mode
-    this.camera.setMode('video-snapshot');
+    this.camera.setMode('video-snapshot').then(this.startAction('picture'));
   } else {
-    this.camera.setMode('picture');
+    this.camera.setMode('picture').then(this.startAction('picture'));
   }
-  this.startAction('picture');
 };
 
 ControlsController.prototype.onRecordClick = function() {
-  this.camera.setMode('video');
-  this.startAction('video');
+  this.camera.setMode('video').then(this.startAction('video'));
 };
 
 ControlsController.prototype.onCaptureHold = function() {
