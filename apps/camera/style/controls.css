@@ -325,8 +325,8 @@
  */
 
 .capture-button:active .inner-circle,
-.recording .capture-button .inner-circle,
-.capture-active .capture-button .inner-circle {
+.capture-active .capture-button.js-capture .inner-circle,
+.recording .capture-button.js-record .inner-circle {
   background-color: #00caf2;
   color: white;
   transform: scale(1.0);
@@ -347,8 +347,8 @@
  */
 
 .controls .capture-button.mode-video:active .inner-circle,
-.controls.capture-active .capture-button.mode-video .inner-circle,
-.controls.recording .capture-button.mode-video .inner-circle {
+.controls.capture-active .capture-button.mode-video.js-capture .inner-circle,
+.controls.recording .capture-button.mode-video.js-record .inner-circle {
   background-color: #D92E2E;
 }
 
@@ -373,8 +373,8 @@
  */
 
 .capture-button:active .center:before,
-.recording .capture-button .center:before,
-.capture-active .capture-button .center:before {
+.recording .capture-button.js-record .center:before,
+.capture-active .capture-button.js-capture .center:before {
   color: white;
 }
 
@@ -405,8 +405,8 @@
  */
 
 .controls .capture-button.mode-video:active .center:before,
-.controls.recording .capture-button.mode-video .center:before,
-.controls.capture-active .capture-button.mode-video .center:before {
+.controls.recording .capture-button.mode-video.js-record .center:before,
+.controls.capture-active .capture-button.mode-video.js-capture .center:before {
   border-radius: 3px;
   background-color: white;
 }

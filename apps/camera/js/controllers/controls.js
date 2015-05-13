@@ -167,7 +167,9 @@ ControlsController.prototype.onCaptureRelease = function() {
 };
 
 ControlsController.prototype.startAction = function(mode) {
-  this.captureHighlightOn();
+  if (mode !== 'video') {
+    this.captureHighlightOn();
+  }
   this.app.emit('capture', {mode:mode});
 };
 /**
