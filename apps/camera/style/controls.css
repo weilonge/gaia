@@ -299,8 +299,17 @@
 .outer-circle {
   background: #C3F5FF;
   opacity: 0.35;
+  transition: transform 150ms ease-in;
 }
 
+.controls-right .outer-circle,
+.recording .controls-middle .outer-circle{
+  transform: scale(0.9);
+}
+
+.recording .controls-right .outer-circle {
+  transform: scale(1);
+}
 /**
  * .mode-video
  */
@@ -316,6 +325,11 @@
   background-color: white;
   transform: scale(0.76);
   transition: transform 150ms ease-in;
+}
+
+.controls-right .capture-button .inner-circle,
+.recording .controls-middle .capture-button .inner-circle{
+   transform: scale(0.70);
 }
 
 /**
