@@ -19,6 +19,9 @@ module.exports = View.extend({
   name: 'controls',
   className: 'test-controls',
 
+  touchThreshold: 700,
+  touchTimestamp: null,
+
   initialize: function(options) {
     this.drag = options && options.drag; // test hook
     this.once('inserted', this.setupSwitch);
@@ -74,10 +77,9 @@ module.exports = View.extend({
   bindEvents: function() {
     this.onButtonClick = debounce(this.onButtonClick, 300, true);
     bind(this.els.thumbnail, 'click', this.onButtonClick);
-    bind(this.els.capture, 'click', this.onButtonClick);
     bind(this.els.cancel, 'click', this.onButtonClick);
-    bind(this.els.capture, 'contextmenu', this.onButtonHold);
-    bind(this.els.capture, 'touchend', this.onButtonRelease);
+    bind(this.els.capture, 'touchstart', this.onButtonTouch);
+    bind(this.els.capture, 'touchend', this.onButtonTouchEnd);
     bind(this.els.record, 'click', this.onButtonClick);
     return this;
   },
@@ -160,15 +162,43 @@ module.exports = View.extend({
     this.el.setAttribute('aria-hidden', !visible);
   },
 
-  onButtonHold: function (e) {
-    e.stopPropagation();
+  onButtonHold: function (name) {
     debug('button long press');
+    this.emit('buttonHold:' + name);
+  },
+
+  onButtonTouch: function (e) {
+    e.stopPropagation();
+    
+    // body...
+    var that = this;
     var name = e.currentTarget.getAttribute('name');
-    this.emit('buttonHold:' + name, e);
+    debug('button touchstart');
+
+    // clean Timestamp first
+    this.clearTouchTimestamp();
+
+    //set timeout for trigger longpress.
+    this.touchTimestamp = window.setTimeout( function() {
+      that.clearTouchTimestamp();
+      that.onButtonHold(name);
+    }, this.touchThreshold);
+  },
+
+  onButtonTouchEnd: function (e) {
+    e.stopPropagation();
+    debug('button long touch end');
+    if (this.touchTimestamp) {
+      // trigger click
+      this.clearTouchTimestamp();
+      this.onButtonClick(e);
+    } else {
+      // trigger ButtonRelease
+      this.onButtonRelease(e);
+    }
   },
 
   onButtonRelease: function (e) {
-    e.stopPropagation();
     debug('button long press leave');
     var name = e.currentTarget.getAttribute('name');
     this.emit('buttonRelease:' + name, e);
@@ -179,6 +209,13 @@ module.exports = View.extend({
     debug('button click');
     var name = e.currentTarget.getAttribute('name');
     this.emit('click:' + name, e);
+  },
+
+  clearTouchTimestamp: function () {
+    if (this.touchTimestamp) {
+      window.clearTimeout(this.touchTimestamp);
+      this.touchTimestamp = null;
+    }
   },
 
   setMode: function(mode) {
