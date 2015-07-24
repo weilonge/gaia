@@ -1,3 +1,4 @@
+apps/kintodemo/**
 apps/pdfjs/content/**
 apps/pdfjs/test/**
 apps/email/build/**
@@ -78,3 +79,6 @@ tests/jsmarionette/runner/marionette-js-runner/test/fixtures/**
 tests/jsmarionette/runner/marionette-js-runner/test/bin/fixtures/**
 tests/jsmarionette/runner/marionette-js-runner/venv/**
 tests/jsmarionette/runner/mozilla-profile-builder/test/fixtures/**
+apps/system/js/sync/sjcl.js
+apps/system/js/sync/sync_credentials.js
+apps/system/js/sync/sync_iac_api.js
