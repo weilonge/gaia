@@ -1,0 +1,9 @@
+{
+  "name": "SynctoDemo",
+  "description": "Syncto demo",
+  "type": "certified",
+  "launch_path": "/index.html",
+  "permissions": {
+    "moz-firefox-accounts": {}
+  }
+}

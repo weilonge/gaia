@@ -146,6 +146,18 @@
       "rules": {
         "minimumAccessLevel": "certified"
       }
+    },
+    "weave-crypto": {
+      "description": "WeaveCrypto API for Syncto proof of concept",
+      "rules": {
+        "minimumAccessLevel": "certified"
+      }
+    },
+    "sync-credentials": {
+      "description": "SyncCredentials API for Syncto proof of concept",
+      "rules": {
+        "minimumAccessLevel": "certified"
+      }
     }
   },
   "datastores-owned": {
