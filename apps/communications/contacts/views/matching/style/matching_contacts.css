@@ -6,8 +6,7 @@
 
 #main {
   position: fixed;
-  top: 5rem;
-  height: calc(100% - 11.8rem);
+  height: 100%;
   width: calc(100% + 0.8rem);
   overflow-x: hidden;
   overflow-y: auto;
@@ -20,7 +19,6 @@
 
 #contacts-list-container label {
   left: 0;
-  pointer-events: auto;
 }
 
 #contacts-list-container > ol > li[data-uuid] {
@@ -29,11 +27,11 @@
   border-top: none;
 }
 
-#contacts-list-container > ol > li[data-uuid] aside,
+/*#contacts-list-container > ol > li[data-uuid] aside,
 #contacts-list-container > ol > li[data-uuid] label,
 #contacts-list-container > ol > li[data-uuid] p {
   pointer-events: none;
-}
+}*/
 
 #contacts-list-container > ol > li[data-uuid] aside > img {
   box-shadow: none;
@@ -46,16 +44,8 @@
 
 /* BB overrides */
 
-[data-type="list"] li[aria-disabled="true"] {
-  pointer-events: auto;
-}
-
 .match-main-reason {
   color: #008eab;
-}
-
-li[aria-disabled="true"] .match-main-reason {
-  color: #5b5b5b;
 }
 
 form[role="dialog"][data-type="edit"] #duplicate-msg > p {
@@ -66,16 +56,6 @@ form[role="dialog"][data-type="edit"] #duplicate-msg > p {
 
 form[role="dialog"][data-type="edit"] #main {
   pointer-events: auto;
-}
-
-/* Suggested duplicate contacts for xxx */
-#matching-details .selected {
-  color: #00caf2;
-}
-
-#matching-details img {
-  height: 6rem;
-  width: 6rem;
 }
 
 #duplicate-msg {
@@ -128,4 +108,8 @@ form[role="dialog"][data-type="edit"] #main {
 html[dir="rtl"] #contacts-list-container label {
   left: unset;
   right: 0;
+}
+
+#contacts-list-container > ol > li[data-uuid] label {
+  pointer-events: auto;
 }

@@ -36,7 +36,6 @@ apps/collection/js/create_collection.js
 apps/collection/js/objects.js
 apps/collection/js/suggestions.js
 apps/collection/js/view_apps.js
-apps/communications/contacts/js/contacts_matching_ui.js
 apps/communications/contacts/js/export/bt.js
 apps/communications/contacts/js/tag_options.js
 apps/communications/contacts/js/utilities/normalizer.js
@@ -52,6 +51,7 @@ apps/communications/contacts/test/unit/multiple_contact_del_test.js
 apps/communications/contacts/test/unit/views/form_test.js
 apps/communications/contacts/views/form/js/form_controller.js
 apps/communications/contacts/views/form/js/form_ui.js
+apps/communications/contacts/views/matching/js/matching_ui.js
 apps/communications/dialer/js/mmi.js
 apps/communications/dialer/js/mmi_ui.js
 apps/communications/facebook/js/fb_sync_init.js
@@ -110,16 +110,7 @@ apps/settings/js/panels/wifi/wifi_wps.js
 apps/settings/js/utils.js
 apps/settings/test/unit/firefox_accounts_panel_test.js
 apps/sharedtest/test/unit/l10n/l10n_test.js
-apps/sharedtest/test/unit/lazy_l10n_test.js
 apps/sms/views/conversation/js/attachment.js
-apps/sms/views/conversation/js/conversation.js
-apps/sms/views/conversation/js/information.js
-apps/sms/views/conversation/test/unit/information_test.js
-apps/sms/views/shared/js/localization_helper.js
-apps/sms/views/shared/js/settings.js
-apps/sms/views/shared/js/utils.js
-apps/sms/views/shared/test/unit/localization_helper_test.js
-apps/sms/views/shared/test/unit/utils_test.js
 apps/system/fxa/js/fxam_errors.js
 apps/system/fxa/js/screens/fxam_enter_email.js
 apps/system/fxa/js/screens/fxam_enter_password.js
@@ -151,13 +142,10 @@ apps/system/js/quick_settings.js
 apps/system/js/screenshot.js
 apps/system/js/sleep_menu.js
 apps/system/js/device_storage_watcher.js
-apps/system/js/time_icon.js
 apps/system/js/update_manager.js
 apps/system/js/value_selector/spin_date_picker.js
 apps/system/js/value_selector/value_selector.js
 apps/system/js/voicemail.js
-apps/system/lockscreen/js/lockscreen_media_playback.js
-apps/system/lockscreen/js/widgets/clock/lockscreen_clock_widget.js
 apps/system/mobile_id/js/ui.js
 apps/system/test/unit/external_storage_monitor_test.js
 apps/system/test/unit/fxa_test/screens/fxam_signup_success_test.js
@@ -183,7 +171,6 @@ shared/js/dialer/keypad.js
 shared/js/dialer/utils.js
 shared/js/download/download_formatter.js
 shared/js/l10n_date.js
-shared/js/lazy_l10n.js
 shared/js/media/media_frame.js
 shared/js/media/media_utils.js
 shared/js/media/video_player.js

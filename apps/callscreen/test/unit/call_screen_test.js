@@ -1,19 +1,20 @@
-/* globals CallScreen, FontSizeManager, MockCallsHandler, Utils,
+/* globals CallScreen, FontSizeManager, l10nAssert, MockCallsHandler,
            MockHandledCall, MockMozActivity, MockNavigatorMozTelephony,
-           MockMozL10n, MocksHelper, MockSettingsListener */
+           MockL10n, MocksHelper, MockSettingsListener, Utils */
 
 'use strict';
 
-require('/shared/test/unit/mocks/mock_navigator_moz_telephony.js');
+require('/shared/test/unit/l10n_helper.js');
+require('/shared/test/unit/mocks/mock_l10n.js');
 require('/shared/test/unit/mocks/mock_moz_activity.js');
-require('/shared/test/unit/mocks/dialer/mock_lazy_l10n.js');
+require('/shared/test/unit/mocks/mock_navigator_moz_telephony.js');
+require('/shared/test/unit/mocks/mock_settings_listener.js');
 require('/shared/test/unit/mocks/dialer/mock_handled_call.js');
 require('/shared/test/unit/mocks/dialer/mock_call.js');
 require('/shared/test/unit/mocks/dialer/mock_calls_handler.js');
 require('/shared/test/unit/mocks/dialer/mock_font_size_manager.js');
 require('/shared/test/unit/mocks/dialer/mock_keypad.js');
 require('/shared/test/unit/mocks/dialer/mock_utils.js');
-require('/shared/test/unit/mocks/mock_settings_listener.js');
 require('/shared/js/lockscreen_connection_info_manager.js');
 require('/test/unit/mock_conference_group_ui.js');
 
@@ -21,7 +22,6 @@ var mocksHelperForCallScreen = new MocksHelper([
   'CallsHandler',
   'ConferenceGroupUI',
   'MozActivity',
-  'LazyL10n',
   'FontSizeManager',
   'KeypadManager',
   'Utils'
@@ -45,6 +45,7 @@ suite('call screen', function() {
   var calls;
   var groupCalls;
   var groupCallsList;
+  var callOptions;
   var callToolbar;
   var hideBarMuteButton;
   var muteButton;
@@ -69,7 +70,7 @@ suite('call screen', function() {
     realSettingsListener = window.SettingsListener;
     window.SettingsListener = MockSettingsListener;
     realMozL10n = navigator.mozL10n;
-    navigator.mozL10n = MockMozL10n;
+    navigator.mozL10n = MockL10n;
   });
 
   suiteTeardown(function() {
@@ -106,9 +107,13 @@ suite('call screen', function() {
     groupCallsList.id = 'group-call-details-list';
     groupCalls.appendChild(groupCallsList);
 
+    callOptions = document.createElement('footer');
+    callOptions.id = 'call-options';
+    screen.appendChild(callOptions);
+
     callToolbar = document.createElement('section');
     callToolbar.id = 'co-advanced';
-    screen.appendChild(callToolbar);
+    callOptions.appendChild(callToolbar);
 
     muteButton = document.createElement('button');
     muteButton.id = 'mute';
@@ -173,6 +178,7 @@ suite('call screen', function() {
       CallScreen.mainContainer = container;
       CallScreen.contactBackground = contactBackground;
       CallScreen.calls = calls;
+      CallScreen.callOptions = callOptions;
       CallScreen.callToolbar = callToolbar;
       CallScreen.muteButton = muteButton;
       CallScreen.speakerButton = speakerButton;
@@ -777,12 +783,12 @@ suite('call screen', function() {
       CallScreen.showIncoming();
     });
 
-    test('should remove class of callToolbar and incomingContainer',
+    test('should remove class of callOptions and incomingContainer',
     function() {
-      assert.isTrue(callToolbar.classList.contains('transparent'));
+      assert.isTrue(callOptions.classList.contains('transparent'));
       assert.isTrue(incomingContainer.classList.contains('displayed'));
       CallScreen.hideIncoming();
-      assert.isFalse(callToolbar.classList.contains('transparent'));
+      assert.isFalse(callOptions.classList.contains('transparent'));
       assert.isFalse(incomingContainer.classList.contains('displayed'));
     });
 
@@ -812,9 +818,6 @@ suite('call screen', function() {
       addEventListenerSpy = this.sinon.spy(statusMessage, 'addEventListener');
       removeEventListenerSpy =
         this.sinon.spy(statusMessage, 'removeEventListener');
-      this.sinon.stub(MockMozL10n, 'setAttributes', function(element, id) {
-        element.setAttribute('data-l10n-id', id);
-      });
 
       CallScreen.showStatusMessage('message');
     });
@@ -824,10 +827,7 @@ suite('call screen', function() {
     });
 
     test('should show the text', function() {
-      assert.equal(
-        statusMessage.querySelector('p').getAttribute('data-l10n-id'),
-        'message'
-      );
+      l10nAssert(statusMessage.querySelector('p'), 'message');
     });
 
     suite('once the transition ends', function() {
@@ -860,50 +860,44 @@ suite('call screen', function() {
   });
 
   suite('showClock in screen locked status', function() {
-    var formatArgs = [],
-        currentDate,
-        fakeClockTime12 = '12:02',
-        fakeClockTime24 = '13:14',
-        fakeDate = 'Monday, September 16';
-
-    setup(function() {
-      this.sinon.stub(navigator.mozL10n, 'DateTimeFormat', function() {
-        this.localeFormat = function(date, format) {
-          formatArgs.push(arguments);
-          if (format === 'shortTimeFormat12') {
-            return fakeClockTime12;
-          } else if (format === 'shortTimeFormat24') {
-            return fakeClockTime24;
-          }
-
-          return fakeDate;
-        };
-      });
-    });
-
     test('clock and date should display current date info', function() {
-      currentDate = new Date();
+      var currentDate = new Date();
+      window.navigator.mozHour12 = false;
       CallScreen.showClock(currentDate);
       var dateStr = CallScreen.lockedDate.textContent;
-      // The date parameter here should be equal to clock setup date.
-      assert.equal(formatArgs.length, 2);
-      assert.equal(formatArgs[0][0], currentDate);
-      assert.equal(formatArgs[1][0], currentDate);
-      assert.equal(dateStr, fakeDate);
+      var clockStr = CallScreen.lockedClockTime.textContent;
+
+      assert.equal(dateStr,
+        currentDate.toLocaleString(navigator.languages, {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric'
+        })
+      );
+
+      assert.equal(clockStr,
+        currentDate.toLocaleString(navigator.languages, {
+          hour12: navigator.mozHour12,
+          hour: 'numeric',
+          minute: 'numeric'
+        })
+      );
     });
 
     test('clock should display current 12 hour time info', function() {
+      var currentDate = new Date();
       window.navigator.mozHour12 = true;
       CallScreen.showClock(currentDate);
-      var clockTime = CallScreen.lockedClockTime.textContent;
-      assert.equal(clockTime, fakeClockTime12);
-    });
+      var clockStr = CallScreen.lockedClockTime.textContent;
+      var amPm = currentDate.toLocaleFormat('%p');
 
-    test('clock should display current 24 hour time info', function() {
-      window.navigator.mozHour12 = false;
-      CallScreen.showClock(currentDate);
-      var clockTime = CallScreen.lockedClockTime.textContent;
-      assert.equal(clockTime, fakeClockTime24);
+      var refStr = currentDate.toLocaleString(navigator.languages, {
+        hour12: navigator.mozHour12,
+        hour: 'numeric',
+        minute: 'numeric'
+      }).replace(amPm, '').trim();
+
+      assert.equal(clockStr, refStr);
     });
   });
 

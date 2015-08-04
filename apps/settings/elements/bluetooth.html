@@ -17,7 +17,7 @@
           <gaia-switch data-ignore>
             <label data-l10n-id="bluetooth-visible-to-all"></label>
           </gaia-switch>
-          <p class="explanation bluetooth-device-name"></p>
+          <p class="explanation"><bdi class="bluetooth-device-name"></bdi></p>
         </li>
         <li hidden id="bluetooth-rename">
           <button id="rename-device" data-l10n-id="rename-device" disabled></button>
@@ -45,10 +45,10 @@
 
     <form role="dialog" data-type="confirm" id="update-device-name" hidden>
       <section>
-        <h1 data-l10n-id="change-device-name"></h1>
+        <h1 data-l10n-id="change-btdevice-name"></h1>
         <p>
           <input type="text" id="update-device-name-input" value="" dir="auto"/>
-          <span data-l10n-id="change-phone-name-desc"></span>
+          <span data-l10n-id="change-btdevice-name-desc"></span>
         </p>
       </section>
       <menu>

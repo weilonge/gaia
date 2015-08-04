@@ -140,6 +140,12 @@ function runTests(filenames, args, retry) {
           stdout
         );
 
+        // ACHTUNG!!! DEBUGGING CODE!!! REMOVE!!!
+        console.error('++!!++!!++!!++!!++!!',
+                      '\nstdout length =', stdout.length,
+                      '\nstdout was =', stdout,
+                      '\n++!!++!!++!!++!!++!!');
+
         return;
       }
 
@@ -209,7 +215,12 @@ function runTest(filename, args, retry) {
  * Checks whether a single test file failed.
  */
 function testDidFailOnTbpl(stdout, stderr) {
-  return stdout.indexOf('TEST-UNEXPECTED-FAIL') !== -1;
+  // ACHTUNG!!! DEBUGGING CODE!!! REMOVE!!!
+  console.log('testDidFail: stdout.length =', stdout.length);
+  console.log('testDidFail: stderr.length =', stderr.length);
+
+  // Ensure we captured output before deciding if the test failed or not.
+  return stdout.length && stdout.indexOf('TEST-UNEXPECTED-FAIL') !== -1;
 }
 
 function forEach(obj, fn) {

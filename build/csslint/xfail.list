@@ -41,7 +41,7 @@ apps/music/style/music.css 0 2
 apps/pdfjs/content/web/viewer.css 0 1
 apps/privacy-panel/style/lists.css 0 1
 apps/settings/style/apps.css 0 1
-apps/settings/style/lists.css 2 2
+apps/settings/style/lists.css 2 1
 apps/settings/style/settings.css 0 9
 apps/settings/style/settings_large.css 1 1
 apps/settings/style/screen_lock.css 0 2
@@ -53,9 +53,9 @@ apps/system/mobile_id/style/mobile_id.css 0 16
 apps/system/style/cards_view/cards_view.css 3 0
 apps/system/style/modal_dialog/modal_dialog.css 0 1
 apps/system/style/net_error.css 1 0
-apps/system/style/permission_manager/permission_manager.css 0 1
 apps/system/style/sound_manager/sound_manager.css 1 3
 apps/system/style/system/system.css 0 2
+apps/system/style/themes/default/core.css 0 1
 apps/system/style/utility_tray/utility_tray.css 1 0
 apps/system/style/window.css 0 3
 apps/system/style/zindex.css 0 4

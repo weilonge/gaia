@@ -79,6 +79,7 @@ var ConversationView = {
   shouldChangePanelNextEvent: false,
   showErrorInFailedEvent: '',
   previousSegment: 0,
+  buildingMessages: {},
 
   timeouts: {
     update: null,
@@ -598,6 +599,10 @@ var ConversationView = {
       this.handleActivity(args.activity);
     } else if (args.draftId) {
       this.handleDraft(+args.draftId);
+    }
+
+    if (args.focusComposer) {
+      Compose.focus();
     } else {
       this.recipients.focus();
     }
@@ -625,6 +630,7 @@ var ConversationView = {
           this.draft.isEdited = false;
 
           Compose.fromDraft(this.draft);
+          Compose.focus();
         }
       });
     }
@@ -725,18 +731,9 @@ var ConversationView = {
       parametersPromise = Promise.resolve(params);
     }
 
-    return parametersPromise.then((parameters) => {
-      Compose.fromMessage(parameters);
-
-      if (this.recipients.length) {
-        Compose.focus();
-      } else {
-        // If message had subject then it's focused as well causing "interact"
-        // Compose event that sets Recipients.View.isFocusable to false.
-        Recipients.View.isFocusable = true;
-        this.recipients.focus();
-      }
-    });
+    return parametersPromise.then(
+      (parameters) => Compose.fromMessage(parameters)
+    );
   },
 
   // recalling draft for composer only
@@ -745,37 +742,36 @@ var ConversationView = {
     // We'll revisit this.draft necessity in bug 1164435.
     this.draft = Drafts.byDraftId(draftId);
 
-    // Draft recipients are added as the composer launches
-    if (this.draft) {
-      // Recipients will exist for draft messages in threads
-      // Otherwise find them from draft recipient numbers
-      this.draft.recipients.forEach(function(number) {
-        Contacts.findByAddress(number).then(function(contacts) {
-          var recipient;
-          if (contacts.length) {
-            recipient = Utils.basicContact(number, contacts[0]);
-            recipient.source = 'contacts';
-          } else {
-            recipient = {
-              number: number,
-              source: 'manual'
-            };
-          }
-
-          this.recipients.add(recipient);
-        }.bind(this));
-      }, this);
-
-      // Render draft contents into the composer input area.
-      Compose.fromDraft(this.draft);
-
-      // Discard this draft object and update the backing store
-      Drafts.delete(this.draft).store();
-
-      this.draft.isEdited = false;
-    } else {
-      this.recipients.focus();
+    if (!this.draft) {
+      return;
     }
+
+    // Recipients will exist for draft messages in threads
+    // Otherwise find them from draft recipient numbers
+    this.draft.recipients.forEach(function(number) {
+      Contacts.findByAddress(number).then(function(contacts) {
+        var recipient;
+        if (contacts.length) {
+          recipient = Utils.basicContact(number, contacts[0]);
+          recipient.source = 'contacts';
+        } else {
+          recipient = {
+            number: number,
+            source: 'manual'
+          };
+        }
+
+        this.recipients.add(recipient);
+      }.bind(this));
+    }, this);
+
+    // Render draft contents into the composer input area.
+    Compose.fromDraft(this.draft);
+
+    // Discard this draft object and update the backing store
+    Drafts.delete(this.draft).store();
+
+    this.draft.isEdited = false;
   },
 
   beforeEnterComposer() {
@@ -861,8 +857,9 @@ var ConversationView = {
     // Update the stored thread data
     Threads.registerMessage(message);
 
-    this.appendMessage(message);
-    TimeHeaders.updateAll('header[data-time-update]');
+    return this.appendMessage(message).then(
+      () => TimeHeaders.updateAll('header[data-time-update]')
+    );
   },
 
   /**
@@ -1193,7 +1190,10 @@ var ConversationView = {
       return threadPromise.then((id) => {
         return Navigation.toPanel('thread', { id: id, focusComposer: true });
       }, () => {
-        return Navigation.toPanel('composer', { activity: parameters });
+        return Navigation.toPanel('composer', {
+          activity: parameters,
+          focusComposer: !!(parameters && parameters.number)
+        });
       });
     });
   },
@@ -1613,9 +1613,14 @@ var ConversationView = {
     // assuming that incoming message only has one deliveryInfo
     var status = message.deliveryInfo[0].deliveryStatus;
 
-    var expireFormatted = Utils.date.format.localeFormat(
-      new Date(+message.expiryDate), navigator.mozL10n.get('expiry-date-format')
-    );
+    var dateTimeOptions = {
+      weekday: 'long',
+      month: 'short',
+      day: '2-digit',
+    };
+    var formatter = 
+      new Intl.DateTimeFormat(navigator.languages, dateTimeOptions);
+    var expireFormatted = formatter.format(new Date(+message.expiryDate));
 
     var expired = +message.expiryDate < Date.now();
 
@@ -1637,7 +1642,7 @@ var ConversationView = {
       messageL10nId: messageL10nId,
       messageL10nArgs: JSON.stringify({ date: expireFormatted }),
       messageL10nDate: message.expiryDate.toString(),
-      messageL10nDateFormat: 'expiry-date-format',
+      messageL10nDateFormat: JSON.stringify(dateTimeOptions),
       downloadL10nId: downloadL10nId
     });
   },
@@ -1765,11 +1770,14 @@ var ConversationView = {
 
     var result;
     if (message.type === 'mms' && !isNotDownloaded && !noAttachment) { // MMS
+      this.buildingMessages[message.id] = messageDOM;
+
       result = SMIL.parse(message).then(
         (slideArray) => this.createMmsContent(slideArray)
-      ).then(
-        (mmsContent) => pElement.appendChild(mmsContent)
-      ).then(
+      ).then((mmsContent) => {
+        pElement.appendChild(mmsContent);
+        delete this.buildingMessages[message.id];
+      }).then(
         () => messageDOM
       );
     } else {
@@ -2449,7 +2457,8 @@ var ConversationView = {
   },
 
   setMessageStatus: function(id, status) {
-    var messageDOM = document.getElementById('message-' + id);
+    var messageDOM =
+      document.getElementById('message-' + id) || this.buildingMessages[id];
 
     if (!messageDOM || messageDOM.classList.contains(status)) {
       return;

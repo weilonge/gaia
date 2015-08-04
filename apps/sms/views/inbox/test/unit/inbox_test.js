@@ -1352,12 +1352,6 @@ suite('thread_list_ui', function() {
 
         var container = document.getElementById(containerId);
 
-        // Since mozL10n is not ready nothing should be rendered
-        assert.ok(!container);
-
-        navigator.mozL10n.readyState = 'complete';
-        navigator.mozL10n.once.yield();
-
         container = document.getElementById(containerId);
         assert.ok(container);
         assert.equal(container.querySelector('li').id, 'thread-' + thread.id);
@@ -1991,7 +1985,10 @@ suite('thread_list_ui', function() {
     test('click on draft', function() {
       draft1.querySelector('label').click();
 
-      sinon.assert.calledWith(Navigation.toPanel, 'composer', { draftId: 101 });
+      sinon.assert.calledWith(
+        Navigation.toPanel,
+        'composer', { draftId: 101, focusComposer: true }
+      );
     });
   });
 

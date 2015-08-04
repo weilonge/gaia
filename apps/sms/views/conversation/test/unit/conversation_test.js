@@ -1543,183 +1543,213 @@ suite('conversation.js >', function() {
       );
     }
 
-    setup(function(done) {
-      fakeMessage = MockMessages.sms({
+    setup(function() {
+      this.sinon.stub(Navigation, 'isCurrentPanel');
+      this.sinon.spy(ConversationView, 'appendMessage');
+    });
+
+
+    test('onMessageSent for MMS', function(done) {
+      fakeMessage = MockMessages.mms({
         id: 24601,
         delivery: 'sending'
       });
 
-      this.sinon.stub(Navigation, 'isCurrentPanel').
-        withArgs('thread', { id: fakeMessage.threadId }).
-        returns(true);
-
-      this.sinon.spy(ConversationView, 'appendMessage');
+      Navigation.isCurrentPanel.withArgs(
+        'thread', { id: fakeMessage.threadId }
+      ).returns(true);
 
       MessageManager.on.withArgs('message-sending').yield({
         message: fakeMessage
       });
 
-      ConversationView.appendMessage.returnValues[0].then(() => {
+      MessageManager.on.withArgs('message-failed-to-send').yield({
+        message: fakeMessage
+      });
+
+      ConversationView.appendMessage.lastCall.returnValue.then(() => {
         container = document.getElementById('message-' + fakeMessage.id);
+        assertMessageStatus('error');
       }).then(done, done);
     });
 
-    teardown(function() {
-      container.remove();
-    });
+    suite('waiting for message rendering >', function() {
+      setup(function(done) {
+        fakeMessage = MockMessages.sms({
+          id: 24601,
+          delivery: 'sending'
+        });
 
-    suite('onMessageSending >', function() {
-      test('sets correct status for message element', function() {
-        assertMessageStatus('sending');
-      });
-    });
+        Navigation.isCurrentPanel.withArgs(
+          'thread', { id: fakeMessage.threadId }
+        ).returns(true);
 
-    suite('onMessageSent >', function() {
-      test('sets correct status for message element', function() {
-        MessageManager.on.withArgs('message-sent').yield({
+        MessageManager.on.withArgs('message-sending').yield({
           message: fakeMessage
         });
 
-        assertMessageStatus('sent');
-      });
-    });
-
-    suite('onMessageFailed >', function() {
-      test('sets correct status for message element', function() {
-        MessageManager.on.withArgs('message-failed-to-send').yield({
-          message: fakeMessage
-        });
-
-        assertMessageStatus('error');
+        ConversationView.appendMessage.returnValues[0].then(() => {
+          container = document.getElementById('message-' + fakeMessage.id);
+        }).then(done, done);
       });
 
-      suite('Show error dialog while sending failed',
-        function() {
-        setup(function() {
-          this.sinon.spy(ConversationView, 'showMessageError');
-          this.sinon.stub(Settings, 'switchMmsSimHandler')
-            .returns(Promise.resolve());
+      teardown(function() {
+        container.remove();
+      });
+
+      suite('onMessageSending >', function() {
+        test('sets correct status for message element', function() {
+          assertMessageStatus('sending');
         });
-        test('does not show dialog if error is not NonActiveSimCardError',
-          function() {
+      });
+
+      suite('onMessageSent >', function() {
+        test('sets correct status for message element', function() {
+          MessageManager.on.withArgs('message-sent').yield({
+            message: fakeMessage
+          });
+
+          assertMessageStatus('sent');
+        });
+      });
+
+      suite('onMessageFailed >', function() {
+        test('sets correct status for message element', function() {
           MessageManager.on.withArgs('message-failed-to-send').yield({
             message: fakeMessage
           });
-          sinon.assert.notCalled(ConversationView.showMessageError);
+
+          assertMessageStatus('error');
         });
-        test('Show dialog if error is NonActiveSimCardError',
+
+        suite('Show error dialog while sending failed',
           function() {
-          ConversationView.showErrorInFailedEvent = 'NonActiveSimCardError';
-          MessageManager.on.withArgs('message-failed-to-send').yield({
+          setup(function() {
+            this.sinon.spy(ConversationView, 'showMessageError');
+            this.sinon.stub(Settings, 'switchMmsSimHandler')
+              .returns(Promise.resolve());
+          });
+          test('does not show dialog if error is not NonActiveSimCardError',
+            function() {
+            MessageManager.on.withArgs('message-failed-to-send').yield({
+              message: fakeMessage
+            });
+            sinon.assert.notCalled(ConversationView.showMessageError);
+          });
+          test('Show dialog if error is NonActiveSimCardError',
+            function() {
+            ConversationView.showErrorInFailedEvent = 'NonActiveSimCardError';
+            MessageManager.on.withArgs('message-failed-to-send').yield({
+              message: fakeMessage
+            });
+            sinon.assert.called(ConversationView.showMessageError);
+            assert.equal(ConversationView.showErrorInFailedEvent, '');
+            MockErrorDialog.calls[0][1].confirmHandler();
+
+            assertMessageStatus('sending');
+            sinon.assert.called(Settings.switchMmsSimHandler);
+          });
+        });
+      });
+
+      suite('onDeliverySuccess >', function() {
+        test('sms delivery success', function() {
+          fakeMessage.type = 'sms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryStatus = 'success';
+          MessageManager.on.withArgs('message-delivered').yield({
             message: fakeMessage
           });
-          sinon.assert.called(ConversationView.showMessageError);
-          assert.equal(ConversationView.showErrorInFailedEvent, '');
-          MockErrorDialog.calls[0][1].confirmHandler();
+
+          assertMessageStatus('delivered');
+        });
+        test('mms delivery success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [{
+            receiver: null, deliveryStatus: 'success'}];
+          MessageManager.on.withArgs('message-delivered').yield({
+            message: fakeMessage
+          });
+
+          assertMessageStatus('delivered');
+        });
+        test('multiple recipients mms delivery success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [
+            {receiver: null, deliveryStatus: 'success'},
+            {receiver: null, deliveryStatus: 'success'}];
+          MessageManager.on.withArgs('message-delivered').yield({
+            message: fakeMessage
+          });
+
+          assertMessageStatus('delivered');
+        });
+        test('not all recipients return mms delivery success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [
+            {receiver: null, deliveryStatus: 'success'},
+            {receiver: null, deliveryStatus: 'pending'}];
+          MessageManager.on.withArgs('message-delivered').yield({
+            message: fakeMessage
+          });
 
           assertMessageStatus('sending');
-          sinon.assert.called(Settings.switchMmsSimHandler);
         });
       });
-    });
 
-    suite('onDeliverySuccess >', function() {
-      test('sms delivery success', function() {
-        fakeMessage.type = 'sms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryStatus = 'success';
-        MessageManager.on.withArgs('message-delivered').yield({
-          message: fakeMessage
+      suite('onReadSuccess >', function() {
+        test('mms read success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [{
+            receiver: null, readStatus: 'success'}];
+          MessageManager.on.withArgs('message-read').yield({
+            message: fakeMessage
+          });
+
+          assertMessageStatus('read');
         });
+        test('display read icon when both delivery/read success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [{
+            receiver: null, deliveryStatus: 'success', readStatus: 'success'}];
+          MessageManager.on.withArgs('message-delivered').yield({
+            message: fakeMessage
+          });
+          MessageManager.on.withArgs('message-read').yield({
+            message: fakeMessage
+          });
 
-        assertMessageStatus('delivered');
-      });
-      test('mms delivery success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [{
-          receiver: null, deliveryStatus: 'success'}];
-        MessageManager.on.withArgs('message-delivered').yield({
-          message: fakeMessage
+          assertMessageStatus('read');
         });
+        test('multiple recipients mms read success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [
+            {receiver: null, readStatus: 'success'},
+            {receiver: null, readStatus: 'success'}];
+          MessageManager.on.withArgs('message-read').yield({
+            message: fakeMessage
+          });
 
-        assertMessageStatus('delivered');
-      });
-      test('multiple recipients mms delivery success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [
-          {receiver: null, deliveryStatus: 'success'},
-          {receiver: null, deliveryStatus: 'success'}];
-        MessageManager.on.withArgs('message-delivered').yield({
-          message: fakeMessage
+          assertMessageStatus('read');
         });
+        test('not all recipients return mms read success', function() {
+          fakeMessage.type = 'mms';
+          fakeMessage.delivery = 'sent';
+          fakeMessage.deliveryInfo = [
+            {receiver: null, readStatus: 'success'},
+            {receiver: null, readStatus: 'pending'}];
+          MessageManager.on.withArgs('message-read').yield({
+            message: fakeMessage
+          });
 
-        assertMessageStatus('delivered');
-      });
-      test('not all recipients return mms delivery success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [
-          {receiver: null, deliveryStatus: 'success'},
-          {receiver: null, deliveryStatus: 'pending'}];
-        MessageManager.on.withArgs('message-delivered').yield({
-          message: fakeMessage
+          assertMessageStatus('sending');
         });
-
-        assertMessageStatus('sending');
-      });
-    });
-
-    suite('onReadSuccess >', function() {
-      test('mms read success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [{
-          receiver: null, readStatus: 'success'}];
-        MessageManager.on.withArgs('message-read').yield({
-          message: fakeMessage
-        });
-
-        assertMessageStatus('read');
-      });
-      test('display read icon when both delivery/read success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [{
-          receiver: null, deliveryStatus: 'success', readStatus: 'success'}];
-        MessageManager.on.withArgs('message-delivered').yield({
-          message: fakeMessage
-        });
-        MessageManager.on.withArgs('message-read').yield({
-          message: fakeMessage
-        });
-
-        assertMessageStatus('read');
-      });
-      test('multiple recipients mms read success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [
-          {receiver: null, readStatus: 'success'},
-          {receiver: null, readStatus: 'success'}];
-        MessageManager.on.withArgs('message-read').yield({
-          message: fakeMessage
-        });
-
-        assertMessageStatus('read');
-      });
-      test('not all recipients return mms read success', function() {
-        fakeMessage.type = 'mms';
-        fakeMessage.delivery = 'sent';
-        fakeMessage.deliveryInfo = [
-          {receiver: null, readStatus: 'success'},
-          {receiver: null, readStatus: 'pending'}];
-        MessageManager.on.withArgs('message-read').yield({
-          message: fakeMessage
-        });
-
-        assertMessageStatus('sending');
       });
     });
   });
@@ -2723,10 +2753,6 @@ suite('conversation.js >', function() {
     }
 
     setup(function() {
-      // we do this here because of sinon fake timers
-      this.sinon.stub(Utils.date.format, 'localeFormat', function() {
-        return 'date_stub';
-      });
       this.sinon.stub(MessageManager, 'retrieveMMS', function() {
         return {};
       });
@@ -2771,15 +2797,24 @@ suite('conversation.js >', function() {
         assert.equal(notDownloadedMessage.dataset.l10nId,
           'tobedownloaded-attachment',
           'localization id set correctly');
+        var formatter = new Intl.DateTimeFormat(navigator.languages, {
+          weekday: 'long',
+          month: 'short',
+          day: '2-digit',
+        });
         assert.equal(notDownloadedMessage.dataset.l10nArgs,
-          '{"date":"date_stub"}',
+          JSON.stringify({'date': formatter.format(message.expiryDate)}),
           'localization arguments set correctly');
       });
       test('date is correctly determined', function() {
-        assert.equal(+Utils.date.format.localeFormat.args[0][0],
-          message.expiryDate);
-        assert.equal(Utils.date.format.localeFormat.args[0][1],
-          'expiry-date-format');
+        assert.deepEqual(
+          JSON.parse(notDownloadedMessage.dataset.l10nDateFormat),
+          {
+            weekday: 'long',
+            month: 'short',
+            day: '2-digit',
+          }
+        );
       });
       test('button text is correct', function() {
         assert.equal(button.dataset.l10nId, 'downloading-attachment');
@@ -2829,15 +2864,24 @@ suite('conversation.js >', function() {
         assert.equal(notDownloadedMessage.dataset.l10nId,
           'tobedownloaded-attachment',
           'localization id set correctly');
+        var formatter = new Intl.DateTimeFormat(navigator.languages, {
+          weekday: 'long',
+          month: 'short',
+          day: '2-digit',
+        });
         assert.equal(notDownloadedMessage.dataset.l10nArgs,
-          '{"date":"date_stub"}',
+          JSON.stringify({'date': formatter.format(message.expiryDate)}),
           'localization arguments set correctly');
       });
       test('date is correctly determined', function() {
-        assert.equal(+Utils.date.format.localeFormat.args[0][0],
-          message.expiryDate);
-        assert.equal(Utils.date.format.localeFormat.args[0][1],
-          'expiry-date-format');
+        assert.deepEqual(
+          JSON.parse(notDownloadedMessage.dataset.l10nDateFormat),
+          {
+            weekday: 'long',
+            month: 'short',
+            day: '2-digit',
+          }
+        );
       });
       test('button text is correct', function() {
         assert.equal(button.dataset.l10nId, 'download-attachment');
@@ -3028,27 +3072,34 @@ suite('conversation.js >', function() {
         assert.isFalse(element.classList.contains('pending'));
       });
       test('message is correct', function() {
-        assert.equal(
-          notDownloadedMessage.dataset.l10nId,
+        assert.equal(notDownloadedMessage.dataset.l10nId,
           'tobedownloaded-attachment',
-          'localization id set correctly'
-        );
-        assert.equal(
-          notDownloadedMessage.dataset.l10nArgs,
-          '{"date":"date_stub"}',
-          'localization arguments set correctly'
-        );
+          'localization id set correctly');
+        var l10nFormat = {
+          weekday: 'long',
+          month: 'short',
+          day: '2-digit',
+        };
+        var formatter =
+          new Intl.DateTimeFormat(navigator.languages, l10nFormat);
+        assert.equal(notDownloadedMessage.dataset.l10nArgs,
+          JSON.stringify({'date': formatter.format(message.expiryDate)}),
+          'localization arguments set correctly');
         assert.equal(
           notDownloadedMessage.dataset.l10nDateFormat,
-          'expiry-date-format',
+          JSON.stringify(l10nFormat),
           'localization date format set correctly'
         );
       });
       test('date is correctly determined', function() {
-        assert.equal(+Utils.date.format.localeFormat.args[0][0],
-          message.expiryDate);
-        assert.equal(Utils.date.format.localeFormat.args[0][1],
-          'expiry-date-format');
+        assert.deepEqual(
+          JSON.parse(notDownloadedMessage.dataset.l10nDateFormat),
+          {
+            weekday: 'long',
+            month: 'short',
+            day: '2-digit',
+          }
+        );
       });
       test('button text is correct', function() {
         assert.equal(button.dataset.l10nId, 'download-attachment');
@@ -3140,15 +3191,26 @@ suite('conversation.js >', function() {
         assert.equal(notDownloadedMessage.dataset.l10nId,
           'expired-attachment',
           'localization id set correctly');
+        var l10nFormat = {
+          weekday: 'long',
+          month: 'short',
+          day: '2-digit',
+        };
+        var formatter =
+          new Intl.DateTimeFormat(navigator.languages, l10nFormat);
         assert.equal(notDownloadedMessage.dataset.l10nArgs,
-          '{"date":"date_stub"}',
+          JSON.stringify({'date': formatter.format(message.expiryDate)}),
           'localization arguments set correctly');
       });
       test('date is correctly determined', function() {
-        assert.equal(+Utils.date.format.localeFormat.args[0][0],
-          message.expiryDate);
-        assert.equal(Utils.date.format.localeFormat.args[0][1],
-          'expiry-date-format');
+        assert.deepEqual(
+          JSON.parse(notDownloadedMessage.dataset.l10nDateFormat),
+          {
+            weekday: 'long',
+            month: 'short',
+            day: '2-digit',
+          }
+        );
       });
       suite('clicking', function() {
         setup(function() {
@@ -4617,7 +4679,12 @@ suite('conversation.js >', function() {
       function(done) {
         ConversationView.navigateToComposer({ test: 'test' }).then(() => {
           sinon.assert.calledWith(
-            Navigation.toPanel, 'composer', { activity: { test: 'test' } }
+            Navigation.toPanel,
+            'composer',
+            {
+              activity: { test: 'test' },
+              focusComposer: sinon.match.falsy
+            }
           );
           sinon.assert.notCalled(Utils.confirm);
         }).then(done, done);
@@ -4637,7 +4704,12 @@ suite('conversation.js >', function() {
           );
           sinon.assert.called(ConversationView.discardDraft);
           sinon.assert.calledWith(
-            Navigation.toPanel, 'composer', { activity: { test: 'test' } }
+            Navigation.toPanel,
+            'composer',
+            {
+              activity: { test: 'test' },
+              focusComposer: sinon.match.falsy
+            }
           );
         }).then(done, done);
       });
@@ -4650,7 +4722,12 @@ suite('conversation.js >', function() {
 
         ConversationView.navigateToComposer({ number: '+123' }).then(() => {
           sinon.assert.calledWith(
-            Navigation.toPanel, 'composer', { activity: { number: '+123' } }
+            Navigation.toPanel,
+            'composer', 
+            {
+              activity: { number: '+123' },
+              focusComposer: true
+            }
           );
         }).then(done, done);
       });
@@ -6169,7 +6246,9 @@ suite('conversation.js >', function() {
     // some more tests are in the "sending behavior" part
 
     setup(function() {
-      this.sinon.stub(ConversationView, 'appendMessage');
+      this.sinon.stub(ConversationView, 'appendMessage').returns(
+        Promise.resolve()
+      );
       this.sinon.stub(ConversationView, 'isCurrentConversation').returns(false);
 
       this.sinon.spy(Navigation, 'toPanel');
@@ -6385,7 +6464,9 @@ suite('conversation.js >', function() {
         Promise.resolve(message)
       );
 
-      ConversationView.handleActivity({ messageId: message.id }).then(() => {
+      ConversationView.afterEnterComposer(
+        { activity: { messageId: message.id } }
+      ).then(() => {
         sinon.assert.calledWith(Compose.fromMessage, message);
         sinon.assert.notCalled(Compose.focus);
         sinon.assert.called(ConversationView.recipients.focus);
@@ -6414,7 +6495,9 @@ suite('conversation.js >', function() {
         Promise.resolve([])
       );
 
-      ConversationView.handleActivity(activity).then(() => {
+      ConversationView.afterEnterComposer(
+        { activity: activity, focusComposer: true }
+      ).then(() => {
         sinon.assert.called(Compose.focus);
         sinon.assert.notCalled(ConversationView.recipients.focus);
       }).then(done, done);
@@ -6426,7 +6509,7 @@ suite('conversation.js >', function() {
         number: null,
         body: 'Youtube url'
       };
-      ConversationView.handleActivity(activity).then(() => {
+      ConversationView.afterEnterComposer({ activity: activity }).then(() => {
         sinon.assert.notCalled(Compose.focus);
         sinon.assert.called(ConversationView.recipients.focus);
       }).then(done, done);
@@ -6999,6 +7082,8 @@ suite('conversation.js >', function() {
             { then: (callback) => callback() }
           );
 
+          this.sinon.stub(Compose, 'focus');
+
           // ensures a clean state
           ConversationView.draft = null;
 
@@ -7015,6 +7100,7 @@ suite('conversation.js >', function() {
             ConversationView.renderMessages, Compose.fromDraft
           );
           sinon.assert.calledWith(Compose.fromDraft, draft);
+          sinon.assert.called(Compose.focus);
           assert.equal(draft, ConversationView.draft);
           assert.isFalse(ConversationView.draft.isEdited);
         });

@@ -1,11 +1,11 @@
 /* globals AudioCompetingHelper, BluetoothHelper, CallScreen,
            ConferenceGroupHandler, Contacts, HandledCall, KeypadManager,
-           LazyL10n, SimplePhoneMatcher, TonePlayer, Utils */
+           SimplePhoneMatcher, TonePlayer, Utils */
 
 'use strict';
 
 /* globals BluetoothHelper, CallScreen, Contacts, FontSizeManager, HandledCall,
-           KeypadManager, LazyL10n, SimplePhoneMatcher, TonePlayer, Utils,
+           KeypadManager, SimplePhoneMatcher, TonePlayer, Utils,
            AudioCompetingHelper */
 
 var CallsHandler = (function callsHandler() {
@@ -101,7 +101,7 @@ var CallsHandler = (function callsHandler() {
     // Adding any new calls to handledCalls
     telephony.calls.forEach(function callIterator(call) {
       var alreadyAdded = handledCalls.some(function hcIterator(hc) {
-        return (hc.call == call);
+        return (hc.call === call);
       });
 
       if (!alreadyAdded) {
@@ -111,7 +111,7 @@ var CallsHandler = (function callsHandler() {
 
     // Removing any ended calls to handledCalls
     function hcIterator(call) {
-      return (call == hc.call);
+      return (call === hc.call);
     }
 
     for (var index = (handledCalls.length - 1); index >= 0; index--) {
@@ -197,7 +197,7 @@ var CallsHandler = (function callsHandler() {
       }
     } else {
       if (window.location.hash.startsWith('#locked') &&
-          (call.state == 'incoming')) {
+          (call.state === 'incoming')) {
         CallScreen.render('incoming-locked');
       } else {
         CallScreen.render(call.state);
@@ -217,14 +217,14 @@ var CallsHandler = (function callsHandler() {
     CallScreen.hideIncoming();
 
     var remainingCall = handledCalls[0];
-    if (remainingCall.call.state == 'incoming') {
+    if (remainingCall.call.state === 'incoming') {
       // The active call ended, showing the incoming call
       remainingCall.show();
 
       // This is the difference between an endAndAnswer() and
       // the active call being disconnected while a call is waiting
       setTimeout(function nextTick() {
-        if (remainingCall.call.state == 'incoming') {
+        if (remainingCall.call.state === 'incoming') {
           CallScreen.render('incoming');
         }
       });
@@ -270,45 +270,49 @@ var CallsHandler = (function callsHandler() {
   }
 
   function handleCallWaiting(call) {
-    LazyL10n.get(function localized(_) {
-      var number = call.secondId ? call.secondId.number : call.id.number;
+    var number = call.secondId ? call.secondId.number : call.id.number;
 
-      if (!number) {
-        CallScreen.incomingNumber.textContent = _('withheld-number');
-        FontSizeManager.adaptToSpace(FontSizeManager.SECOND_INCOMING_CALL,
-          CallScreen.incomingNumber, false, 'end');
-        return;
-      }
+    if (!number) {
+      navigator.mozL10n.setAttributes(CallScreen.incomingNumber,
+                                      'withheld-number');
+      // Force a synchronous translation so we can resize the string
+      navigator.mozL10n.translateFragment(CallScreen.incomingNumber);
+      FontSizeManager.adaptToSpace(FontSizeManager.SECOND_INCOMING_CALL,
+        CallScreen.incomingNumber, false, 'end');
+      return;
+    }
 
-      if (navigator.mozIccManager.iccIds.length > 1) {
-        CallScreen.incomingSim.textContent = _('sim-number',
-                                               { n: call.serviceId + 1 });
+    if (navigator.mozIccManager.iccIds.length > 1) {
+      navigator.mozL10n.setAttributes(
+        CallScreen.incomingSim,
+        'sim-number',
+        { n: call.serviceId + 1 }
+      );
+    } else {
+      CallScreen.incomingSim.hidden = true;
+    }
+
+    Contacts.findByNumber(number,
+                          function lookupContact(contact, matchingTel) {
+      if (contact && contact.name) {
+        CallScreen.incomingInfo.classList.add('additionalInfo');
+        CallScreen.incomingNumber.textContent = contact.name;
+        CallScreen.incomingNumberAdditionalTelType.textContent =
+          Utils.getPhoneNumberAdditionalInfo(matchingTel);
+        CallScreen.incomingNumberAdditionalTel.textContent = number;
       } else {
-        CallScreen.incomingSim.hidden = true;
+        CallScreen.incomingNumber.textContent = number;
+        CallScreen.incomingNumberAdditionalTelType.textContent = '';
+        CallScreen.incomingNumberAdditionalTel.textContent = '';
       }
 
-      Contacts.findByNumber(number,
-                            function lookupContact(contact, matchingTel) {
-        if (contact && contact.name) {
-          CallScreen.incomingInfo.classList.add('additionalInfo');
-          CallScreen.incomingNumber.textContent = contact.name;
-          CallScreen.incomingNumberAdditionalTelType.textContent =
-            Utils.getPhoneNumberAdditionalInfo(matchingTel);
-          CallScreen.incomingNumberAdditionalTel.textContent = number;
-        } else {
-          CallScreen.incomingNumber.textContent = number;
-          CallScreen.incomingNumberAdditionalTelType.textContent = '';
-          CallScreen.incomingNumberAdditionalTel.textContent = '';
-        }
-
-        FontSizeManager.adaptToSpace(
-          FontSizeManager.SECOND_INCOMING_CALL, CallScreen.incomingNumber,
-          false, 'end');
-        if (contact && contact.name) {
-          FontSizeManager.ensureFixedBaseline(
-            FontSizeManager.SECOND_INCOMING_CALL, CallScreen.incomingNumber);
-        }
-      });
+      FontSizeManager.adaptToSpace(
+        FontSizeManager.SECOND_INCOMING_CALL, CallScreen.incomingNumber,
+        false, 'end');
+      if (contact && contact.name) {
+        FontSizeManager.ensureFixedBaseline(
+          FontSizeManager.SECOND_INCOMING_CALL, CallScreen.incomingNumber);
+      }
     });
 
     if (cdmaCallWaiting()) {
@@ -451,8 +455,6 @@ var CallsHandler = (function callsHandler() {
     }
 
     handledCalls[0].call.answer();
-
-    CallScreen.render('connected');
   }
 
   function holdAndAnswer() {
@@ -495,7 +497,7 @@ var CallsHandler = (function callsHandler() {
       return;
     }
 
-    if (telephony.active == telephony.conferenceGroup) {
+    if (telephony.active === telephony.conferenceGroup) {
       endConferenceCall().then(function() {
         CallScreen.hideIncoming();
       }, function() {});
@@ -582,13 +584,11 @@ var CallsHandler = (function callsHandler() {
 
     if (telephony.active) {
       telephony.active.hold();
-      CallScreen.render('connected-hold');
     } else {
       var line = telephony.calls.length ?
         telephony.calls[0] : telephony.conferenceGroup;
 
       line.resume();
-      CallScreen.render('connected');
     }
   }
 
@@ -763,8 +763,8 @@ var CallsHandler = (function callsHandler() {
    * @return {Boolean} Returns true if we're in CDMA call waiting mode.
    */
   function cdmaCallWaiting() {
-    return ((telephony.calls.length == 1) &&
-            (telephony.calls[0].state == 'connected') &&
+    return ((telephony.calls.length === 1) &&
+            (telephony.calls[0].state === 'connected') &&
             (telephony.calls[0].secondId));
   }
 
@@ -841,7 +841,7 @@ var CallsHandler = (function callsHandler() {
    */
   function isEstablishingCall() {
     return telephony.calls.some(function(call) {
-      return call.state == 'dialing' || call.state == 'alerting';
+      return call.state === 'dialing' || call.state === 'alerting';
     });
   }
 

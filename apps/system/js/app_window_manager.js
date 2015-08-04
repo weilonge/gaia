@@ -120,6 +120,10 @@
     },
 
     setHierarchy: function(active) {
+      this._activeApp && this._activeApp.setVisibleForScreenReader(active);
+    },
+
+    setFocus: function(active) {
       if (!this._activeApp) {
         this.debug('No active app.');
         return false;
@@ -134,7 +138,6 @@
         this._activeApp.blur();
         this._activeApp.setNFCFocus(false);
       }
-      this._activeApp.setVisibleForScreenReader(active);
       return true;
     },
 
@@ -239,18 +242,18 @@
     _nfcHandler: null,
 
     /**
-     * Switch to a different app
-     * @param {AppWindow} newApp The new app window instance.
+     * Switch to a different app, when called with no parameters will switch to
+     * the homescreen
+     * @param {AppWindow} [newApp] The new app window instance.
      * @param {String} [openAnimation] The open animation for opening app.
      * @param {String} [closeAnimation] The close animation for closing app.
-     * @param {String} [eventType] The event type of displaying app.
      * @memberOf module:AppWindowManager
      */
     display: function awm_display(newApp, openAnimation, closeAnimation,
                                   eventType) {
       this._dumpAllWindows();
-      var appCurrent = this._activeApp, appNext = newApp ||
-        this.service.query('getHomescreen', 'home' === eventType);
+      var appCurrent = this._activeApp;
+      var appNext = newApp || this.service.query('getHomescreen', true);
 
       if (!appNext) {
         this.debug('no next app.');
@@ -455,7 +458,7 @@
       } else if (this.taskManager && this.taskManager.isActive()) {
         return true;
       } else {
-        this.display(null, null, null, 'home');
+        this.display();
         return false;
       }
     },

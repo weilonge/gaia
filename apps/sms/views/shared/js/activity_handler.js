@@ -208,21 +208,20 @@ var ActivityHandler = {
         activity: {
           body: message.body || null,
           number: message.number || null
-        }
+        },
+        focusComposer: focusComposer
       });
     };
 
-    navigator.mozL10n.once(function waitLocalized() {
-      if (!document.hidden) {
-        // Case of calling from Notification
-        navigateToView();
-        return;
-      }
+    if (!document.hidden) {
+      // Case of calling from Notification
+      navigateToView();
+      return;
+    }
 
-      document.addEventListener('visibilitychange', function waitVisibility() {
-        document.removeEventListener('visibilitychange', waitVisibility);
-        navigateToView();
-      });
+    document.addEventListener('visibilitychange', function waitVisibility() {
+      document.removeEventListener('visibilitychange', waitVisibility);
+      navigateToView();
     });
   },
 
