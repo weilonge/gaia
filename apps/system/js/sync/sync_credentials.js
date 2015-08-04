@@ -16,8 +16,11 @@
   }
 
   function bytesAsHex(bytes) {
-    return [("0" + bytes.charCodeAt(byte).toString(16)).slice(-2)
-      for (byte in bytes)].join("");
+    var array = [];
+    bytes.forEach(function (byte){
+      array.push((byte < 16 ? '0' : '') + byte.toString(16).toLowerCase());
+    });
+    return array.join('');
   }
 
   var SyncCredentials = {
@@ -45,16 +48,21 @@
     // Return string: hex(first16Bytes(sha256(kBbytes)))
     getXClientState: function() {
       return new Promise((resolve, reject) => {
-        LazyLoader.load('js/sync/sjcl.js', () => {
-          this.getKeys().then(result => {
-            console.log('Got result ', result);
-            console.log('kB ' + result.kB);
-            var bitArray = sjcl.hash.sha256.hash(bytesAsHex(result.kB));
-            var sha256Digest = sjcl.codec.hex.fromBits(bitArray);
-            var state = bytesAsHex(sha256Digest.slice(0,16));
-            console.log('result ' + state);
-            resolve(result);
-          });
+        this.getKeys().then(credentials => {
+          var kBarray = [];
+          var kB = credentials.kB;
+          for(var i = 0; i < kB.length; i+=2){
+            kBarray.push(parseInt(kB.substring(i, i+2), 16));
+          }
+          window.crypto.subtle.digest({name: "SHA-256"}, new Uint8Array(kBarray))
+            .then(function(hash){
+              var clientState = new Uint8Array(hash).slice(0, 16);
+              console.log(bytesAsHex(clientState));
+              resolve(bytesAsHex(clientState));
+            })
+            .catch(function(err){
+              reject(err);
+            });
         });
       });
     }
