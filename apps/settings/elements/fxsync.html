@@ -1,0 +1,61 @@
+<element name="fxsync" extends="section">
+  <template>
+
+    <gaia-header action="back" data-href="#root">
+      <h1 data-l10n-id="fxsync"></h1>
+    </gaia-header>
+
+    <div>
+      <div id="fxsync-signin">
+        <ul>
+          <li id="fxsync-enabled">
+            <label class="pack-switch">
+              <input type="checkbox" data-ignore>
+              <span data-l10n-id="fxsync">Firefox Sync</span>
+            </label>
+            <p class="explanation">Signed-in:<br><span id="sync-account"></span></p>
+          </li>
+          <li data-state="ready">
+            <button id="sync-button" data-l10n-id="fxsync-sync-now"></button>
+            <p class="explanation">Last Sync Time:<br><span id="sync-time"></span></p>
+          </li>
+        </ul>
+      </div>
+
+      <div id="fxsync-collections">
+        <header>
+          <h2 data-l10n-id="fxsync-collections">Collections</h2>
+        </header>
+        <ul>
+          <li>
+            <label class="pack-switch">
+              <input type="checkbox" data-ignore>
+              <span data-l10n-id="fxsync-collections-bookmarks">Bookmarks</span>
+            </label>
+          </li>
+          <li>
+            <label class="pack-switch">
+              <input type="checkbox" data-ignore>
+              <span data-l10n-id="fxsync-collections-history">History</span>
+            </label>
+          </li>
+          <li>
+            <label class="pack-switch">
+              <input type="checkbox" data-ignore>
+              <span data-l10n-id="fxsync-collections-tabs">Tabs</span>
+            </label>
+          </li>
+          <li>
+            <label class="pack-switch">
+              <input type="checkbox" data-ignore>
+              <span data-l10n-id="fxsync-collections-password">Password</span>
+            </label>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="js/fxsync.js"></script>
+
+  </template>
+</element>

@@ -321,6 +321,28 @@
     },
 
     /**
+     * Update Firefox Sync menu item based on the preference.
+     *
+     * @access private
+     * @memberOf RootPanelHandler.prototype
+     */
+    _updateDataSyncMenuItem: function rph_refreshDataSyncMenuItem() {
+      var item = this._rootElement.querySelector(
+        '[data-show-name="datasync.menu.enabled"]');
+      if (item && navigator.mozSettings) {
+        return navigator.mozSettings.createLock()
+          .get('datasync.menu.enabled').then(
+            function(result) {
+              item.hidden = !result['datasync.menu.enabled'];
+          }, function(error) {
+            console.error(error);
+          });
+      } else {
+        return Promise.resolve();
+      }
+    },
+
+    /**
      * Process all UI elements here.
      *
      * @access private
