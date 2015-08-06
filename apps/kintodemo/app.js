@@ -123,7 +123,7 @@ var App = {
           headers: { 
             "Authorization": "BrowserID " + assertion,
             // XXX use generated client state
-            "X-Client-State": "4b2598270462349dd3930bbd501ae68c"
+            "X-Client-State": xClientState
           }
         });
         return this._db;
