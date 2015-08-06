@@ -103,12 +103,13 @@ var SyncCredentials = {
 var App = {
   init: function() {
     // DOM elements.
-    ['sync-tabs-button'].forEach((id) => {
+    ['sync-tabs-button', 'sync-history-button'].forEach((id) => {
       this[toCamelCase(id)] = document.getElementById(id);
     });
-   
+
     // Event listeners.
     this.syncTabsButton.addEventListener('click', App.syncTabs.bind(App));
+    this.syncHistoryButton.addEventListener('click', App.syncHistory.bind(App));
   },
 
   ensureDb: function(assertion) {
@@ -191,6 +192,32 @@ var App = {
         console.error(error);
       });
     });
+  },
+
+  // ==== History ====
+  getHistoryCollection() {
+    if (this._history) {
+      return Promise.resolve(this._history);
+    }
+    return this.ensureDb().then(db => {
+      this._history = db.collection('history');
+      return this._history;
+    });
+  },
+
+  storeHistoryToDS: function() {
+
+  },
+
+  syncHistory: function() {
+    this.getHistoryCollection().then(history => {
+      console.log('History ', history);
+      history.sync().then(result => {
+        console.log('Sync results ', result);
+        this.storeHistoryToDS();
+      });
+    });
+
   },
 };
 
