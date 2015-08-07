@@ -84,6 +84,7 @@ var CryptoAPI = {
 var SyncCredentials = {
   getKeys() {
     if (this._credentials) {
+      console.log(this._credentials);
       return Promise.resolve(this._credentials);
     }
 
@@ -116,7 +117,9 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
   var FxSync = {
     init: function fmd_init() {
       this.syncButton = document.querySelector('#sync-button');
-      this.syncButton.addEventListener('click', FxSync.testHistory.bind(FxSync));
+      this.syncButton.
+        addEventListener('click', FxSync.syncHistory.bind(FxSync));
+      SyncCrypto.assignApp(FxSync);
     },
 
     ensureDb: function(assertion) {
@@ -207,6 +210,12 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
         return Promise.resolve(this._history);
       }
       return this.ensureDb().then(db => {
+        SyncCredentials.getKeys().then(credentials => {
+          console.log('credentials');
+          console.log(credentials);
+          document.querySelector('#sync-account').textContent = credentials.email;
+        });
+
         this._history = db.collection('history');
         return this._history;
       });
@@ -216,9 +225,38 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
       this.getHistoryCollection().then(coll => {
         return coll.list();
       }).then(recordsData => {
-        window.historyRecords = recordsData.data;
-        SyncCrypto.decryptRecord(recordsData.data[0]).then(function(record) {
-          console.log('decrypted first record', record);
+        var historyRecords = recordsData.data;
+        var partialRecoreds = historyRecords.slice(0, 10);
+        partialRecoreds.forEach(function (encryptedRecord){
+
+          SyncCrypto.decryptRecord(encryptedRecord).then(function(record) {
+            console.log('decrypted first record', record);
+
+            if(!record.histUri || !record.visits || !record.visits[0]){
+              console.log('invalid history: ', record);
+              return ;
+            }
+
+            var visits = [];
+            record.visits.forEach(function (elem){
+              visits.push(elem.date);
+            });
+
+            var place = {
+              url: record.histUri,
+              title: record.title,
+              visits: visits,
+              visited: record.visits[0]
+            };
+            HistoryAdapter.addPlace(place).then(function (d){
+              console.log(d);
+            }, function (e){
+              console.log(e);
+            });
+            document.querySelector('#sync-time').textContent =
+              new Date().toString();
+          });
+
         });
       });
      },

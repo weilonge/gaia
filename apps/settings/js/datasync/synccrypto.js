@@ -1,5 +1,5 @@
 (function() {
-  var _mainSyncKey, _defaultDecryptionKey;
+  var _mainSyncKey, _defaultDecryptionKey, App;
 
   // some util functions:
   function str2ba(str) {
@@ -33,6 +33,10 @@
     return bytes.buffer;
   }
 
+  function assignApp(app){
+    App = app;
+  }
+
   function fetchCollection(collection) {
     return App.ensureDb().then(function (db) {
       return db.collection(collection)
@@ -40,7 +44,7 @@
       return result.list();
     });
   }
-  
+
   //first, fetch kB from FxAccounts (we don't need kA), stretch it with hkdf, and import it into WebCrypto:
   function getMainSyncKey() {
     if (_mainSyncKey) {
@@ -79,12 +83,12 @@
           'payload': '{"ciphertext":"v6Q+y9yjkUgDCYdzSJhu+mqtvkGLVz1Rjd3uaxYpKvhTK4rG+uOeWTdmmMXOgEaE18meOhfFec9Xg7XZ4ylmjzzBuvbB6r25xUrFHxYTrlZP2jh2OilNGVqKZU1aQmbRLHXBz7OuMcf3PeJvnn8IOhaoQiBLuiMk3oZBJ245dIIqsmCNhq3b6m1eo4rkUGx5X5Ineyi1yOzLalAcYaurGg==","IV":"KM3guoZ7mYY1sFytBVRtOg==","hmac":"964673171f3fcc4b680a4e7e16261f71b209fb65b7bded56a4950318f00881eb"}'}]};
         console.log('Fetched the crypto collection to get the keys record', result);
         var firstCryptoCollObj = JSON.parse(result.data[0].payload);
- 
+
         //assume the first object in the 'crypto' collection is the 'keys' record that we're looking for.
         //convert payload.ciphertext and payload.iv from base64:
         cryptoKeysCiphertext = base64ToArrayBuffer(firstCryptoCollObj.ciphertext);
         cryptoKeysIV = base64ToArrayBuffer(firstCryptoCollObj.IV);
-        
+
         //try to decrypt crypto/keys with main sync key:
         return crypto.subtle.decrypt({
           name: 'AES-CBC',
@@ -109,7 +113,7 @@
     });
   }
 
-  
+
   function decryptRecord(record) {
     var payload = JSON.parse(record.payload);
     return getDefaultDecryptionKey().then(function(defaultDecryptionKey) {
@@ -126,9 +130,10 @@
     });
   }
 
- 
+
   //...
   window.SyncCrypto = {
+    assignApp: assignApp,
     fetchCollection: fetchCollection,
     decryptRecord: decryptRecord
   };
