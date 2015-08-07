@@ -100,6 +100,16 @@ var SyncCredentials = {
   }
 };
 
+var HistoryAdapter = {
+  addPlace: function(place) {
+    console.log(place);
+    return IAC.request('sync-history', {
+      method: 'addPlace',
+      args: [place]
+    });
+  }
+};
+
 var App = {
   init: function() {
     // DOM elements.
@@ -226,6 +236,32 @@ var App = {
       });
     });
   },
+
+  testHistory: function () {
+    /*
+    Object {
+      url: "https://www.mozilla.org/en-US/",
+      title: "",
+      icons: Object,
+      frecency: 3,
+      visits: Array[2],   #### Array [ 1438614210311, 1438450706238 ]
+      screenshot: Blob,
+      visited: 1438614210311
+    }
+    */
+    var place = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: "",
+      frecency: 3,
+      visits: [ 1438614210311, 1438450706238 ],
+      visited: 1438614210311
+    }; // TODO
+    HistoryAdapter.addPlace(place).then(function (d){
+      console.log(d);
+    }, function (e){
+      console.log(e);
+    });
+  }
 };
 
 window.addEventListener('DOMContentLoaded', App.init);

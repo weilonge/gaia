@@ -49,6 +49,14 @@
     })(id);
   }
 
+  function syncHistroyRequest(id, method, args){
+    var url = args[0].url;
+    var visits =  args[0].visits;
+
+    var places = appWindowManager.places;
+    places.setVisits(url, visits);
+  }
+
   /**
    * We expect IAC requests of this form:
    * {
@@ -84,6 +92,9 @@
       case 'sync-credentials':
         syncCredentialsRequest(id, message.detail.method);
         break;
+      case 'sync-history':
+        syncHistroyRequest(id, message.detail.method, args);
+        break;
     }
   }
 
@@ -101,6 +112,10 @@
         onPortMessage('sync-credentials', message);
       });
     })(message);
+  });
+
+  window.addEventListener('iac-sync-history', message => {
+    onPortMessage('sync-history', message);
   });
 
 }());
