@@ -205,19 +205,26 @@ var App = {
     });
   },
 
-  storeHistoryToDS: function() {
-
-  },
+  storeHistoryToDS: function(historyCollection) {
+    this.getHistoryCollection().then(coll => {
+      return coll.list();
+    }).then(recordsData => {
+      window.historyRecords = recordsData.data;
+      SyncCrypto.decryptRecord(recordsData.data[0]).then(function(record) {
+        console.log('decrypted first record', record);
+      });
+    });
+   },
 
   syncHistory: function() {
+    console.log('Retrieving history collection... this may take several minutes on first run');
     this.getHistoryCollection().then(history => {
       console.log('History ', history);
       history.sync().then(result => {
         console.log('Sync results ', result);
-        this.storeHistoryToDS();
+        this.storeHistoryToDS(result);
       });
     });
-
   },
 };
 
