@@ -3,7 +3,7 @@
 
 'use strict';
 
-const REMOTE = "http://69b5bd29.ngrok.io/v1/"
+const REMOTE = "http://localhost:8000/v1/"
 
 function toCamelCase(str) {
   var rdashes = /-(.)/g;
@@ -102,24 +102,21 @@ var SyncCredentials = {
   }
 };
 
-var HistoryAdapter = {
-  addPlace: function(place) {
-    console.log(place);
-    return IAC.request('sync-history', {
-      method: 'addPlace',
-      args: [place]
-    });
-  }
-};
-
 define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
 ], function(SettingsUtils, SettingsListener) {
   var FxSync = {
+    _adapters: {},
+    _credentialCache: {},
     init: function fmd_init() {
       this.syncButton = document.querySelector('#sync-button');
       this.syncButton.
         addEventListener('click', FxSync.syncHistory.bind(FxSync));
       SyncCrypto.assignApp(FxSync);
+      this.registerAdapter('history', SynctoHistoryAdapter);
+    },
+
+    registerAdapter: function(collectionName, adapter) {
+      this._adapters[collectionName] = adapter;
     },
 
     ensureDb: function(assertion) {
@@ -128,6 +125,14 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
           return this._db;
         }
         return SyncCredentials.getXClientState().then(xClientState => {
+          this._credentialCache = {
+            synctoCredentials: {
+             URL: REMOTE,
+             assertion: assertion,
+             xClientState: xClientState
+            }
+          };
+
           this._db = new Kinto({
             bucket: 'syncto',
             remote: REMOTE,
@@ -263,11 +268,20 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
 
     syncHistory: function() {
       console.log('Retrieving history collection... this may take several minutes on first run');
-      this.getHistoryCollection().then(history => {
-        console.log('History ', history);
-        history.sync().then(result => {
-          console.log('Sync results ', result);
-          this.storeHistoryToDS(result);
+      this.ensureDb().then(db => {
+        SyncCredentials.getKeys().then(credentials => {
+          this._credentialCache.kB = credentials.kB;
+          document.querySelector('#sync-account').textContent = credentials.email;
+
+          var se = new SyncEngine(this._credentialCache.synctoCredentials, ['history'], this._credentialCache.kB);
+          se.connect().then(() => {
+            return se.syncNow();
+          }).then(() => {
+            this._adapters.history.update(se._collections.history).then(() => {
+              document.querySelector('#sync-time').textContent =
+                new Date().toString();
+            });
+          });
         });
       });
     },

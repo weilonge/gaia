@@ -50,11 +50,18 @@
   }
 
   function syncHistroyRequest(id, method, args){
-    var url = args[0].url;
-    var visits =  args[0].visits;
+    if (!PlacesAdapter[method]) {
+      console.error('Wrong method ' + method);
+      return;
+    }
 
-    var places = appWindowManager.places;
-    places.setVisits(url, visits);
+    (function(id) {
+      PlacesAdapter[method].apply(PlacesAdapter, args).then(result => {
+        sendPortMessage('sync-history', { id: id, result: result });
+      }).catch(error => {
+        sendPortMessage('sync-history', { id: id, error: error });
+      });
+    })(id);
   }
 
   /**
@@ -115,7 +122,11 @@
   });
 
   window.addEventListener('iac-sync-history', message => {
-    onPortMessage('sync-history', message);
+    (function(message) {
+      LazyLoader.load('js/sync/places_adapter.js', () => {
+        onPortMessage('sync-history', message);
+      });
+    })(message);
   });
 
 }());
