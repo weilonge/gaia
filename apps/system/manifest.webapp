@@ -153,6 +153,12 @@
         "minimumAccessLevel": "certified"
       }
     },
+    "sync-history": {
+      "description": "SyncHistory API for Syncto proof of concept",
+      "rules": {
+        "minimumAccessLevel": "certified"
+      }
+    },
     "sync-credentials": {
       "description": "SyncCredentials API for Syncto proof of concept",
       "rules": {

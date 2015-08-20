@@ -218,6 +218,7 @@
     <link rel="import" href="/elements/firefox_accounts.html">
     <link rel="import" href="/elements/achievements.html">
     <link rel="import" href="/elements/findmydevice.html">
+    <link rel="import" href="/elements/fxsync.html">
     <link rel="import" href="/elements/frame.html">
     <link rel="import" href="/elements/full_developer_mode.html">
     <link rel="import" href="/elements/full_developer_mode_warning.html">
@@ -363,6 +364,9 @@
     <!-- Accounts :: Find My Device -->
     <section is="findmydevice" role="region" id="findmydevice"></section>
 
+    <!-- Accounts :: FxSync -->
+    <section is="fxsync" role="region" id="fxsync"></section>
+
     <!-- Security :: Screen Lock :: PIN Input -->
     <section is="screenLock-passcode" role="region" id="screenLock-passcode" class="dialog"></section>
     <!-- Security :: Screen Lock -->
@@ -482,5 +486,8 @@
     <div class="settings-dialog-overlay" hidden></div>
 
     <script src="js/startup.js"></script>
+    <script src="js/datasync/hawk_creds.js"></script>
+    <script src="js/datasync/kinto.dev.js"></script>
+    <script src="js/datasync/synccrypto.js"></script>
   </body>
 </html>

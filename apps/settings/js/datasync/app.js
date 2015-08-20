@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const REMOTE = "http://66925854.ngrok.com/v1/"
+const REMOTE = "http://69b5bd29.ngrok.io/v1/"
 
 function toCamelCase(str) {
   var rdashes = /-(.)/g;
@@ -36,14 +36,14 @@ var IAC = {
   request: function(portName, message) {
     return new Promise((resolve, reject) => {
       message.id = Date.now();
-      
+
       var onmessage = (event) => {
         if (!event || !event.data) {
           return reject();
         }
         if (event.data.id != message.id) {
           return;
-        }      
+        }
         resolve(event.data.result);
       };
 
@@ -52,7 +52,7 @@ var IAC = {
           port.postMessage(message);
           port.onmessage = onmessage;
         } else {
-          console.error('No ' + portName + ' port');          
+          console.error('No ' + portName + ' port');
           reject();
         }
       });
@@ -131,7 +131,7 @@ var App = {
         this._db = new Kinto({
           bucket: 'syncto',
           remote: REMOTE,
-          headers: { 
+          headers: {
             "Authorization": "BrowserID " + assertion,
             // XXX use generated client state
             "X-Client-State": xClientState
@@ -185,7 +185,7 @@ var App = {
       }).then(result => {
         var tabs = result.tabs;
         tabs.forEach(tab => {
-          var payload = JSON.parse(payload);        
+          var payload = JSON.parse(payload);
           CryptoAPI.decrypt(payload.cypherText, payload.iv);
         });
       });
