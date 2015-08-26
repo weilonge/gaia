@@ -3,6 +3,7 @@
 /* global require, exports, dump */
 var utils = require('utils');
 var jsmin = require('jsmin');
+var preprocessor = require('preprocessor');
 
 var jsSuffix = /\.js$/;
 
@@ -172,6 +173,26 @@ SettingsAppBuilder.prototype.writeGitCommit = function(options) {
   }
 };
 
+SettingsAppBuilder.prototype.enableDataSync = function(options) {
+  var stagePath = options.STAGE_APP_DIR;
+  var fileList = {
+    modification: {
+      html: [
+        utils.getFile(stagePath, 'index.html'),
+        utils.getFile(stagePath, 'elements', 'root.html')
+      ]
+    },
+    disable: {
+      remove: [
+        utils.getFile(stagePath, 'js', 'fxsync.js'),
+        utils.getFile(stagePath, 'elements', 'fxsync.html')
+      ]
+    }
+  };
+  var enable = options.ENABLE_FIREFOX_SYNC === '1';
+  preprocessor.execute('FIREFOX_SYNC', enable, fileList);
+};
+
 SettingsAppBuilder.prototype.execute = function(options) {
   this.writeGitCommit(options);
   this.writeDeviceFeaturesJSON(options);
@@ -180,6 +201,7 @@ SettingsAppBuilder.prototype.execute = function(options) {
   this.writeEuRoamingJSON(options);
 
   return this.executeRjs(options).then(function() {
+    this.enableDataSync(options);
     this.executeJsmin(options);
   }.bind(this));
 };
