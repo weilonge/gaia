@@ -1,8 +1,10 @@
 'use strict';
 
-/* global SyncEngine, HistoryAdapter, SynctoServerFixture, suite, test,
-   requireApp, suite, test, expect */
+/* global SyncEngine, HistoryAdapter, SynctoServerFixture,
+   suite, test, requireApp, suite, test, expect */
 
+requireApp('test/unit/fixtures/synctoserver.js');
+requireApp('test/unit/sync-engine/fxsyncwebcrypto-mock.js');
 requireApp('test/unit/sync-engine/kinto-mock.js');
 requireApp('test/unit/sync-engine/adapter-mock.js');
 requireApp('js/sync-engine/syncengine.js');
@@ -25,13 +27,11 @@ suite('SyncEngine', function() {
   });
   suite('connect', function() {
     test('obtains the bulk key bundle', function(done) {
-      this.timeout(5000);
       var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
       expect(se.connect()).to.eventually.equal(undefined).
              and.notify(done);
     });
     test('rejects its promise if syncto server not responding', function(done) {
-      this.timeout(120000);
       var credentials = cloneObject(
           SynctoServerFixture.testServerCredentials);
       credentials.URL = 'http://example.com:24012/v1/';
@@ -40,20 +40,19 @@ suite('SyncEngine', function() {
         console.log('connect reject', err);
       }).then(done);
     });
-    test('rejects its promise if BrowserID assertion is wrong');
-    test('rejects its promise if X-Client-State is wrong');
-    test('rejects its promise if kB is wrong');
-    test('rejects its promise if global/meta response status not a 200');
-    test('rejects its promise if global/meta response body not JSON');
-    test('rejects its promise if storageVersion wrong');
-    test('rejects its promise if crypto/keys response status not a 200');
-    test('rejects its promise if crypto/keys response body not JSON');
-    test('rejects its promise if cryptoKeys not verified/not decrypted with ' +
-        'kB');
+    // test('rejects its promise if BrowserID assertion is wrong');
+    // test('rejects its promise if X-Client-State is wrong');
+    // test('rejects its promise if kB is wrong');
+    // test('rejects its promise if global/meta response status not a 200');
+    // test('rejects its promise if global/meta response body not JSON');
+    // test('rejects its promise if storageVersion wrong');
+    // test('rejects its promise if crypto/keys response status not a 200');
+    // test('rejects its promise if crypto/keys response body not JSON');
+    // test('rejects its promise if cryptoKeys not verified/not decrypted ' +
+    //     'with kB');
   });
   suite('syncNow', function() {
     test('syncs the encrypted collections', function(done) {
-      this.timeout(10000);
       var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
       se.connect().then(() => {
         se.registerAdapter('history', HistoryAdapter);
@@ -73,7 +72,6 @@ suite('SyncEngine', function() {
     });
     test('rejects its promise if meta/global response status is a 401',
         function(done) {
-      //this.timeout(10000);
       var options = {
         URL: SynctoServerFixture.testServerCredentials.URL,
         assertion: SynctoServerFixture.testServerCredentials.assertion,
@@ -88,7 +86,6 @@ suite('SyncEngine', function() {
     });
     test('rejects its promise if meta/global response is not JSON',
         function(done) {
-      //this.timeout(10000);
       var options = {
         URL: SynctoServerFixture.testServerCredentials.URL,
         assertion: SynctoServerFixture.testServerCredentials.assertion,
@@ -102,7 +99,6 @@ suite('SyncEngine', function() {
       });
     });
     test('rejects its promise if kB is wrong', function(done) {
-      //this.timeout(10000);
       var options = {
         URL: SynctoServerFixture.testServerCredentials.URL,
         assertion: SynctoServerFixture.testServerCredentials.assertion,
@@ -117,7 +113,6 @@ suite('SyncEngine', function() {
     });
     test('rejects its promise if any record not verifiable/decryptable with ' +
         'Bulk Key Bundle', function(done) {
-      //this.timeout(10000);
       var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
       se.connect().then(() => {
         se.registerAdapter('schmistory', HistoryAdapter);

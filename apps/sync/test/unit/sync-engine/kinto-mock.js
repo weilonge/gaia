@@ -1,9 +1,7 @@
 'use strict';
 
-/* global SynctoServerFixture, stub, spy, requireApp */
+/* global SynctoServerFixture, stub, spy */
 /* exported Kinto */
-
-requireApp('test/unit/fixtures/synctoserver.js');
 
 var Kinto = function(options) {
   var syncStub, listStub;
