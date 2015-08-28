@@ -241,6 +241,6 @@ var SyncEngine = (function() {
 
   SyncEngine.AuthError = function() {};
   SyncEngine.AuthError.prototype = Error;
-console.log('returning SyncEngine', SyncEngine);
+
   return SyncEngine;
 })();
