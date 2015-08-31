@@ -1,49 +1,59 @@
 'use strict';
 
-/* global SynctoServerFixture, stub, spy */
+/* global SynctoServerFixture, sinon */
 /* exported Kinto */
 
 var Kinto = (function() {
   var Kinto = function(options) {
-    var syncStub, listStub;
-    if (options.URL === 'http://localhost:8000/v1/') {
+    var syncStub = {
+      //'meta': sinon.stub().returns(Promise.resolve({ ok: true })),
+      'meta': function() {
+        console.log('syncing meta coll');
+        return Promise.resolve({ ok: true });
+      },
+      'crypto': sinon.stub().returns(Promise.resolve({ ok: true })),
+      'history': sinon.stub().returns(Promise.resolve({ ok: true })),
+      'schmistory': sinon.stub().returns(Promise.resolve({ ok: true }))
+    };
+    var listStub = {
+      'meta': sinon.stub().returns(Promise.resolve({
+        data: [
+          SynctoServerFixture.metaGlobalResponse
+        ]
+      })),
+      'crypto': sinon.stub().returns(Promise.resolve({
+        data: [
+          SynctoServerFixture.cryptoKeysResponse
+        ]
+      })),
+      'history': sinon.stub().returns(Promise.resolve({
+        data: [
+          SynctoServerFixture.historyEntryResponse
+        ]
+      })),
+      'schmistory': sinon.stub().returns(Promise.resolve({
+        data: [
+          SynctoServerFixture.schmistoryEntryResponse
+        ]
+      }))
+    };
+    if (options.remote === 'http://example.com:24012/v1/') {
       syncStub = {
-        'global': stub.returns(Promise.resolve()),
-        'crypto': stub.returns(Promise.resolve()),
-        'history': stub.returns(Promise.resolve()),
-        'schmistory': stub.returns(Promise.resolve())
+        'meta': sinon.stub().returns(Promise.resolve({ ok: false })),
+        'crypto': sinon.stub().returns(Promise.resolve({ ok: false })),
+        'history': sinon.stub().returns(Promise.resolve({ ok: false })),
+        'schmistory': sinon.stub().returns(Promise.resolve({ ok: false }))
       };
       listStub = {
-        'global': stub.returns(Promise.resolve(
-            SynctoServerFixture.metaGlobalResponse)),
-        'crypto': stub.returns(Promise.resolve(
-            SynctoServerFixture.cryptoKeysResponse)),
-        'history': stub.returns(Promise.resolve(
-            SynctoServerFixture.historyEntryResponse)),
-        'schmistory': stub.returns(Promise.resolve(
-            SynctoServerFixture.schmistoryEntryResponse))
-      };
-    } else if (options.URL === 'http://example.com:24012/v1/') {
-      syncStub = {
-        'global': stub.returns(Promise.resolve()),
-        'crypto': stub.returns(Promise.resolve()),
-        'history': stub.returns(Promise.resolve()),
-        'schmistory': stub.returns(Promise.resolve())
-      };
-      listStub = {
-        'global': stub.returns(Promise.resolve(
-            SynctoServerFixture.metaGlobalResponse)),
-        'crypto': stub.returns(Promise.resolve(
-            SynctoServerFixture.cryptoKeysResponse)),
-        'history': stub.returns(Promise.resolve(
-            SynctoServerFixture.historyEntryResponse)),
-        'schmistory': stub.returns(Promise.resolve(
-            SynctoServerFixture.schmistoryEntryResponse))
+        'meta': sinon.stub().returns(Promise.resolve('timeout')),
+        'crypto': sinon.stub().returns(Promise.resolve('timeout')),
+        'history': sinon.stub().returns(Promise.resolve('timeout')),
+        'schmistory': sinon.stub().returns(Promise.resolve('timeout'))
       };
     }
 
     this.options = options;
-    this.collection = spy(collectionName => {
+    this.collection = sinon.spy(collectionName => {
       return {
         sync: syncStub[collectionName],
         list: listStub[collectionName]

@@ -1,14 +1,15 @@
 'use strict';
 
-/* global FxSyncWebCryptoFixture, stub, spy */
+/* global SynctoServerFixture, sinon, requireApp */
 /* exported FxSyncWebCrypto */
 
+requireApp('sync/test/unit/fixtures/synctoserver.js');
+
 var FxSyncWebCrypto = function() {
-  this.setKeys = stub.returns(Promise.resolve());
-  this.encrypt = spy((obj, collectionName) => {
-    return Promise.resolve(FxSyncWebCryptoFixture.historyEntryEnc);
-  });
-  this.decrypt = spy((obj, collectionName) => {
-    return Promise.resolve(FxSyncWebCryptoFixture.historyEntryDec);
-  });
+  this.setKeys = sinon.stub().returns(Promise.resolve());
+  this.encrypt = sinon.stub().returns(Promise.resolve(
+      JSON.parse(
+        SynctoServerFixture.historyEntryResponse.payload)));
+  this.decrypt = sinon.stub().returns(Promise.resolve(
+      SynctoServerFixture.historyEntryDec));
 };

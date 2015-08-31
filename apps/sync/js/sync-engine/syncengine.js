@@ -112,7 +112,7 @@ var SyncEngine = (function() {
           if (err instanceof TypeError) {
             throw new SyncEngine.UnrecoverableError();
           } else if (err instanceof Error && typeof err.data === 'number') {
-            if (err.data === 401) {
+            if (err.request.status === 401) {
               throw new SyncEngine.AuthError();
             } else {
               throw new SyncEngine.TryLaterError();
