@@ -112,16 +112,16 @@ suite('SyncEngine', function() {
         done();
       });
     });
-    // test('rejects its promise if any record not verifiable/decryptable ' +
-    //     'with Bulk Key Bundle', function(done) {
-    //   var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
-    //   se.connect().then(() => {
-    //     se.registerAdapter('schmistory', HistoryAdapter);
-    //     return se.syncNow();
-    //   }).then(() => {}, err => {
-    //     expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
-    //     done();
-    //   });
-    // });
+    test('rejects its promise if any record not verifiable/decryptable ' +
+        'with Bulk Key Bundle', function(done) {
+      var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
+      se.connect().then(() => {
+        se.registerAdapter('schmistory', HistoryAdapter);
+        return se.syncNow();
+      }).then(() => {}, err => {
+        expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
+        done();
+      });
+    });
   });
 });

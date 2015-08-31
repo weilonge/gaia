@@ -12,20 +12,22 @@ var Kinto = (function() {
   KintoCollectionMock.prototype = {
     sync: function() {
       if (this._remoteTransformerUsed) {
-        return this._remoteTransformerUsed.decode({ payload: '{}'}).then(
-            decoded => {
+        return this._remoteTransformerUsed.decode(
+            JSON.parse(JSON.stringify(
+                SynctoServerFixture.remoteData[this.collectionName])))
+            .then(decoded => {
           this.listData = {
             data: [
               decoded
             ]
           };
           return Promise.resolve({ ok: true });
-        }, () => {
+        }, err => {
           this.listData = {
             data: [
             ]
           };
-          return Promise.resolve({ ok: false });
+          return Promise.resolve({ ok: false, errors: [ err ] });
         });
       }
       this.listData = {

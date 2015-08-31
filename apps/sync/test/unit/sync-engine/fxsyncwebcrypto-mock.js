@@ -35,12 +35,18 @@ FxSyncWebCrypto.prototype = {
       return Promise.reject();
     }
   },
-  decrypt: function() {
-    if (this.shouldWork) {
+  decrypt: function(record) {
+    var decryptablePayload = JSON.parse(
+        SynctoServerFixture.remoteData.history.payload);
+    if (this.shouldWork &&
+        record.ciphertext ===
+            decryptablePayload.ciphertext &&
+        record.IV === decryptablePayload.IV &&
+        record.hmac === decryptablePayload.hmac) {
       return Promise.resolve(
           SynctoServerFixture.historyEntryDec.payload);
     } else {
-      return Promise.reject();
+      return Promise.reject('payload.ciphertext is not a Base64 string');
     }
   }
 };
