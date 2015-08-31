@@ -85,33 +85,33 @@ suite('SyncEngine', function() {
         done();
       });
     });
-    // test('rejects its promise if meta/global response is not JSON',
-    //     function(done) {
-    //   var options = {
-    //     URL: SynctoServerFixture.testServerCredentials.URL,
-    //     assertion: SynctoServerFixture.testServerCredentials.assertion,
-    //     xClientState: 'respond 200',
-    //     kB: SynctoServerFixture.testServerCredentials.kB
-    //   };
-    //   var se = new SyncEngine(options);
-    //   se.connect().then(function() {}, function(err) {
-    //     expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
-    //     done();
-    //   });
-    // });
-    // test('rejects its promise if kB is wrong', function(done) {
-    //   var options = {
-    //     URL: SynctoServerFixture.testServerCredentials.URL,
-    //     assertion: SynctoServerFixture.testServerCredentials.assertion,
-    //     xClientState: SynctoServerFixture.testServerCredentials.xClientState,
-    //     kB: 'deadbeef'
-    //   };
-    //   var se = new SyncEngine(options);
-    //   se.connect().then(function() {}, function(err) {
-    //     expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
-    //     done();
-    //   });
-    // });
+    test('rejects its promise if meta/global response is not JSON',
+        function(done) {
+      var options = {
+        URL: SynctoServerFixture.testServerCredentials.URL,
+        assertion: SynctoServerFixture.testServerCredentials.assertion,
+        xClientState: 'respond 200',
+        kB: SynctoServerFixture.testServerCredentials.kB
+      };
+      var se = new SyncEngine(options);
+      se.connect().then(function() {}, function(err) {
+        expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
+        done();
+      });
+    });
+    test('rejects its promise if kB is wrong', function(done) {
+      var options = {
+        URL: SynctoServerFixture.testServerCredentials.URL,
+        assertion: SynctoServerFixture.testServerCredentials.assertion,
+        xClientState: SynctoServerFixture.testServerCredentials.xClientState,
+        kB: 'deadbeef'
+      };
+      var se = new SyncEngine(options);
+      se.connect().then(function() {}, function(err) {
+        expect(err).to.be.instanceOf(SyncEngine.UnrecoverableError);
+        done();
+      });
+    });
     // test('rejects its promise if any record not verifiable/decryptable ' +
     //     'with Bulk Key Bundle', function(done) {
     //   var se = new SyncEngine(SynctoServerFixture.testServerCredentials);

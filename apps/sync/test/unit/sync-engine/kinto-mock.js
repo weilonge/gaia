@@ -5,63 +5,77 @@
 
 var Kinto = (function() {
   var KintoCollectionMock = function(collectionName) {
-    var _remoteTransformerUsed = null;
-    return {
-      sync: sinon.stub().returns(Promise.resolve({ ok: true })),
-      list: () => {
-        var dataToReturn = JSON.parse(JSON.stringify({
-          data: [
-            SynctoServerFixture.remoteData[collectionName]
-          ]
-        }));
-        if (_remoteTransformerUsed) {
-          return _remoteTransformerUsed.decode(dataToReturn.data[0]).then(
-              decoded => {
-            dataToReturn.data[0] = decoded;
-            return dataToReturn;
-          });
-        } else {
-          return Promise.resolve(dataToReturn);
-        }
-      },
-      use: sinon.spy((adapter) => {
-        _remoteTransformerUsed = adapter;
-      })
-    };
+    this.collectionName = collectionName;
+    this._remoteTransformerUsed = null;
+    this.data = null;
   };
-  var UnreachableKintoCollectionMock = function(collectionName) {
-    return {
-      sync: sinon.stub().returns(Promise.reject({ ok: false })),
-      list: sinon.stub(),
-      use: sinon.stub()
-    };
+  KintoCollectionMock.prototype = {
+    sync: function() {
+      if (this._remoteTransformerUsed) {
+        return this._remoteTransformerUsed.decode({ payload: '{}'}).then(
+            decoded => {
+          this.listData = {
+            data: [
+              decoded
+            ]
+          };
+          return Promise.resolve({ ok: true });
+        }, () => {
+          this.listData = {
+            data: [
+            ]
+          };
+          return Promise.resolve({ ok: false });
+        });
+      }
+      this.listData = {
+        data: [
+          JSON.parse(JSON.stringify(
+              SynctoServerFixture.remoteData[this.collectionName]))
+        ]
+      };
+      return Promise.resolve({ ok: true });
+    },
+    list: function() {
+      return Promise.resolve(this.listData);
+    },
+    use: function(adapter) {
+      this._remoteTransformerUsed = adapter;
+    }
   };
-  var HttpCodeKintoCollectionMock = function(collectionName, status) {
-    return {
-      sync: sinon.spy(() => {
-        var err = new Error();
-        err.request = {
-          status: status
-        };
-        return Promise.reject(err);
-      }),
-      list: sinon.stub(),
-      use: sinon.stub()
-    };
+
+  var UnreachableKintoCollectionMock = function() {};
+  UnreachableKintoCollectionMock.prototype.sync =  sinon.stub()
+      .returns(Promise.reject({ ok: false }));
+  UnreachableKintoCollectionMock.prototype.list = sinon.stub();
+  UnreachableKintoCollectionMock.prototype.use = sinon.stub();
+
+  var HttpCodeKintoCollectionMock = function(status) {
+    this.status = status;
   };
+  HttpCodeKintoCollectionMock.prototype.sync = sinon.spy(function() {
+    var err = new Error();
+    err.request = {
+      status: this.status
+    };
+    return Promise.reject(err);
+  });
+  HttpCodeKintoCollectionMock.prototype.list = sinon.stub();
+  HttpCodeKintoCollectionMock.prototype.use = sinon.stub();
+
   var Kinto = function(options) {
     this.options = options;
-    this.collection = sinon.spy(collectionName => {
+    this.collection = function(collectionName) {
       var xClientStateParts = options.headers['X-Client-State'].split(' ');
       if (xClientStateParts[0] === 'respond') {
-        return HttpCodeKintoCollectionMock(collectionName,
+        return new HttpCodeKintoCollectionMock(
             parseInt(xClientStateParts[1]));
       } else if (options.remote === 'http://localhost:8000/v1/') {
-          return KintoCollectionMock(collectionName);
+          return new KintoCollectionMock(collectionName);
       } else {
-        return UnreachableKintoCollectionMock(collectionName);
+        return new UnreachableKintoCollectionMock(collectionName);
       }
-    });
+    };
   };
   Kinto.transformers = {
     RemoteTransformer: function() {}

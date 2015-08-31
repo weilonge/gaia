@@ -1,18 +1,46 @@
 'use strict';
 
-/* global SynctoServerFixture, sinon, requireApp */
+/* global SynctoServerFixture, requireApp */
 /* exported FxSyncWebCrypto */
 
 requireApp('sync/test/unit/fixtures/synctoserver.js');
 
-var FxSyncWebCrypto = function() {
-  this.setKeys = sinon.spy(() => {
-    this.bulkKeyBundle = true;
-    return Promise.resolve();
-  });
-  this.encrypt = sinon.stub().returns(Promise.resolve(JSON.parse(
-      SynctoServerFixture.remoteData.history.payload)));
-  this.decrypt = sinon.spy((obj, collection) => {
-    return Promise.resolve(SynctoServerFixture.historyEntryDec.payload);
-  });
+var FxSyncWebCrypto = function() {};
+FxSyncWebCrypto.prototype = {
+  setKeys: function(kB, cryptoKeys) {
+    this.shouldWork = true;
+    if (kB !== SynctoServerFixture.testServerCredentials.kB) {
+      this.shouldWork = false;
+    }
+    var correctCryptoKeys = JSON.parse(
+        SynctoServerFixture.remoteData.crypto.payload);
+    if (cryptoKeys.ciphertext !== correctCryptoKeys.ciphertext ||
+        cryptoKeys.IV !== correctCryptoKeys.IV ||
+        cryptoKeys.hmac !== correctCryptoKeys.hmac) {
+      this.shouldWork = false;
+    }
+    if (this.shouldWork) {
+      this.bulkKeyBundle = true;
+      return Promise.resolve();
+    } else {
+      return Promise.reject('SyncKeys hmac could not be verified with current' +
+          ' main key');
+    }
+  },
+  encrypt: function() {
+    if (this.shouldWork) {
+      return Promise.resolve(JSON.parse(
+          SynctoServerFixture.remoteData.history.payload));
+    } else {
+      return Promise.reject();
+    }
+  },
+  decrypt: function() {
+    if (this.shouldWork) {
+      return Promise.resolve(
+          SynctoServerFixture.historyEntryDec.payload);
+    } else {
+      return Promise.reject();
+    }
+  }
 };
