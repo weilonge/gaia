@@ -1,6 +1,6 @@
 'use strict';
 
-/* global SyncEngine, SynctoServerFixture,
+/* global SyncEngine, SynctoServerFixture, HistoryAdapter,
    suite, test, requireApp, suite, test, expect */
 
 requireApp('sync/test/unit/fixtures/synctoserver.js');
@@ -36,9 +36,10 @@ suite('SyncEngine', function() {
           SynctoServerFixture.testServerCredentials);
       credentials.URL = 'http://example.com:24012/v1/';
       var se = new SyncEngine(credentials);
-      se.connect().then(() => { console.log('connect success'); }, (err) => {
-        console.log('connect reject', err);
-      }).then(done);
+      se.connect().then(() => {}, (err) => {
+        expect(err).to.be.an('object');
+        done();
+      });
     });
     // test('rejects its promise if BrowserID assertion is wrong');
     // test('rejects its promise if X-Client-State is wrong');
@@ -52,24 +53,24 @@ suite('SyncEngine', function() {
     //     'with kB');
   });
   suite('syncNow', function() {
-    // test('syncs the encrypted collections', function(done) {
-    //   var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
-    //   se.connect().then(() => {
-    //     se.registerAdapter('history', HistoryAdapter);
-    //     return se.syncNow();
-    //   }).then(() => {
-    //     expect(se._collections.history).to.be.an('object');
-    //     return se._collections.history.list();
-    //   }).then(list => {
-    //     expect(list).to.be.an('object');
-    //     expect(list.data).to.be.instanceOf(Array);
-    //     expect(list.data.length).to.be.greaterThan(0);
-    //     expect(list.data[0]).to.be.an('object');
-    //     expect(list.data[0].payload).to.be.an('object');
-    //     expect(list.data[0].payload.histUri).to.be.a('string');
-    //     done();
-    //   });
-    // });
+    test('syncs the encrypted collections', function(done) {
+      var se = new SyncEngine(SynctoServerFixture.testServerCredentials);
+      se.connect().then(() => {
+        se.registerAdapter('history', HistoryAdapter);
+        return se.syncNow();
+      }).then(() => {
+        expect(se._collections.history).to.be.an('object');
+        return se._collections.history.list();
+      }).then(list => {
+        expect(list).to.be.an('object');
+        expect(list.data).to.be.instanceOf(Array);
+        expect(list.data.length).to.be.greaterThan(0);
+        expect(list.data[0]).to.be.an('object');
+        expect(list.data[0].payload).to.be.an('object');
+        expect(list.data[0].payload.histUri).to.be.a('string');
+        done();
+      });
+    });
     // test('rejects its promise if meta/global response status is a 401',
     //     function(done) {
     //   var options = {

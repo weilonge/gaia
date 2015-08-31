@@ -222,10 +222,7 @@ var SyncEngine = (function() {
       for (var collectionName in this._collections) {
         promises.push(this._updateCollection(collectionName));
       }
-      return Promise.all(promises).then((results) => {
-      }, (err) => {
-        throw err;
-      });
+      return Promise.all(promises);
       //TODO:
       //push changes after adapter.update finishes
       //call handleConflict for each entry in results[i].conflicts

@@ -4,60 +4,46 @@
 /* exported Kinto */
 
 var Kinto = (function() {
-  var Kinto = function(options) {
-    var syncStub = {
-      //'meta': sinon.stub().returns(Promise.resolve({ ok: true })),
-      'meta': function() {
-        console.log('syncing meta coll');
-        return Promise.resolve({ ok: true });
+  var KintoCollectionMock = function(collectionName) {
+    var _remoteTransformerUsed = null;
+    return {
+      sync: sinon.stub().returns(Promise.resolve({ ok: true })),
+      list: () => {
+        var dataToReturn = JSON.parse(JSON.stringify({
+          data: [
+            SynctoServerFixture.remoteData[collectionName]
+          ]
+        }));
+        if (_remoteTransformerUsed) {
+          return _remoteTransformerUsed.decode(dataToReturn.data[0]).then(
+              decoded => {
+            dataToReturn.data[0] = decoded;
+            return dataToReturn;
+          });
+        } else {
+          return Promise.resolve(dataToReturn);
+        }
       },
-      'crypto': sinon.stub().returns(Promise.resolve({ ok: true })),
-      'history': sinon.stub().returns(Promise.resolve({ ok: true })),
-      'schmistory': sinon.stub().returns(Promise.resolve({ ok: true }))
+      use: sinon.spy((adapter) => {
+        _remoteTransformerUsed = adapter;
+      })
     };
-    var listStub = {
-      'meta': sinon.stub().returns(Promise.resolve({
-        data: [
-          SynctoServerFixture.metaGlobalResponse
-        ]
-      })),
-      'crypto': sinon.stub().returns(Promise.resolve({
-        data: [
-          SynctoServerFixture.cryptoKeysResponse
-        ]
-      })),
-      'history': sinon.stub().returns(Promise.resolve({
-        data: [
-          SynctoServerFixture.historyEntryResponse
-        ]
-      })),
-      'schmistory': sinon.stub().returns(Promise.resolve({
-        data: [
-          SynctoServerFixture.schmistoryEntryResponse
-        ]
-      }))
+  };
+  var UnreachableKintoCollectionMock = function(collectionName) {
+    return {
+      sync: sinon.stub().returns(Promise.reject({ ok: false })),
+      list: sinon.stub(),
+      use: sinon.stub()
     };
-    if (options.remote === 'http://example.com:24012/v1/') {
-      syncStub = {
-        'meta': sinon.stub().returns(Promise.resolve({ ok: false })),
-        'crypto': sinon.stub().returns(Promise.resolve({ ok: false })),
-        'history': sinon.stub().returns(Promise.resolve({ ok: false })),
-        'schmistory': sinon.stub().returns(Promise.resolve({ ok: false }))
-      };
-      listStub = {
-        'meta': sinon.stub().returns(Promise.resolve('timeout')),
-        'crypto': sinon.stub().returns(Promise.resolve('timeout')),
-        'history': sinon.stub().returns(Promise.resolve('timeout')),
-        'schmistory': sinon.stub().returns(Promise.resolve('timeout'))
-      };
-    }
-
+  };
+  var Kinto = function(options) {
     this.options = options;
     this.collection = sinon.spy(collectionName => {
-      return {
-        sync: syncStub[collectionName],
-        list: listStub[collectionName]
-      };
+      if (options.remote === 'http://localhost:8000/v1/') {
+        return KintoCollectionMock(collectionName);
+      } else {
+        return UnreachableKintoCollectionMock(collectionName);
+      }
     });
   };
   Kinto.transformers = {

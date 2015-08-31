@@ -2,14 +2,14 @@
 
 /* exported SynctoServerFixture */
 
-var SynctoServerFixture = {
-  testServerCredentials: {
+var SynctoServerFixture = (function() {
+  var testServerCredentials = {
     URL: 'http://localhost:8000/v1/',
     assertion: 'test-assertion-mock',
     xClientState: 'test-xClientState-mock',
     kB: '85c4f8c1d8e3e2186824c127af786891dd03c6e05b1b45f28f7181211bf2affb'
-  },
-  metaGlobalResponse: {
+  };
+  var remoteDataMeta = {
     id: '825a1b6a-0000-4000-8000-000000000000',
     last_modified: 1234567890123,
     payload: JSON.stringify({
@@ -26,9 +26,9 @@ var SynctoServerFixture = {
         forms: { version:1, syncID: 'Q_mWdmGZtuX9' },
         history: { version: 1, syncID: '2_MOTXJfjA9Q' }
       }
-    }),
-  },
-  cryptoKeysResponse: {
+    })
+  };
+  var remoteDataCrypto = {
     id: '825a1b6a-0000-4000-8000-000000000001',
     last_modified: 1234567890123,
     payload: JSON.stringify({
@@ -39,8 +39,8 @@ var SynctoServerFixture = {
       IV: 'FmosM+XBNy81/9oEAgI4Uw==',
       hmac: '01a816e4577c6cf3f97b66b4382d0a3e7e9178c75a3d38ed9ac8ad6397c2ecce'
     })
-  },
-  historyEntryResponse: {
+  };
+  var remoteDataHistory = {
     id: '825a1b6a-0000-4000-8000-000000000002',
     last_modified: 1234567890123,
     payload: JSON.stringify({
@@ -51,9 +51,9 @@ var SynctoServerFixture = {
           'i2euWrs+fuG4C6PgY4A2j2DbNLVIloqpDVkqM2fgh0YOM9L2NC/uiKEb1Ynr2Fos',
       IV: 'kXL3hb11ltD+Jl0YFk+PlQ==',
       hmac: 'cb727efe7a3f0307921cecbd1a97c03f06a4d75c42026089494d84fcf92dbff9'
-    }),
-  },
-  schmistoryEntryResponse: {
+    })
+  };
+  var remoteDataSchmistory = {
     id: '825a1b6a-0000-4000-8000-000000000002',
     last_modified: 1234567890123,
     payload: JSON.stringify({
@@ -64,9 +64,10 @@ var SynctoServerFixture = {
           '2euWrs+fuG4C6PgY4A2j2DbNLVIloqpDVkqM2fgh0YOM9L2NC/uiKEb1Ynr2Fos',
       IV: 'kXL3hb11ltD+Jl0YFk+PlQ==',
       hmac: 'cb727efe7a3f0307921cecbd1a97c03f06a4d75c42026089494d84fcf92dbff9'
-    }),
-  },
-  historyEntryDec: {
+    })
+  };
+
+  var historyEntryDec = {
     payload: {
       id: '_9sCUbahs0ay',
       histUri: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refer' +
@@ -75,5 +76,15 @@ var SynctoServerFixture = {
       visits:[ { date: 1439366063808983, type:1 } ]
     },
     collectionName: 'history'
-  }
-};
+  };
+  return {
+    testServerCredentials: testServerCredentials,
+    remoteData: {
+      meta: remoteDataMeta,
+      crypto: remoteDataCrypto,
+      history: remoteDataHistory,
+      schmistory: remoteDataSchmistory
+    },
+    historyEntryDec: historyEntryDec
+  };
+})();
