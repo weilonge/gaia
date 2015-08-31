@@ -36,11 +36,28 @@ var Kinto = (function() {
       use: sinon.stub()
     };
   };
+  var HttpCodeKintoCollectionMock = function(collectionName, status) {
+    return {
+      sync: sinon.spy(() => {
+        var err = new Error();
+        err.request = {
+          status: status
+        };
+        return Promise.reject(err);
+      }),
+      list: sinon.stub(),
+      use: sinon.stub()
+    };
+  };
   var Kinto = function(options) {
     this.options = options;
     this.collection = sinon.spy(collectionName => {
-      if (options.remote === 'http://localhost:8000/v1/') {
-        return KintoCollectionMock(collectionName);
+      var xClientStateParts = options.headers['X-Client-State'].split(' ');
+      if (xClientStateParts[0] === 'respond') {
+        return HttpCodeKintoCollectionMock(collectionName,
+            parseInt(xClientStateParts[1]));
+      } else if (options.remote === 'http://localhost:8000/v1/') {
+          return KintoCollectionMock(collectionName);
       } else {
         return UnreachableKintoCollectionMock(collectionName);
       }

@@ -111,7 +111,7 @@ var SyncEngine = (function() {
         .catch(err => {
           if (err instanceof TypeError) {
             throw new SyncEngine.UnrecoverableError();
-          } else if (err instanceof Error && typeof err.data === 'number') {
+          } else if (err instanceof Error && typeof err.request === 'object') {
             if (err.request.status === 401) {
               throw new SyncEngine.AuthError();
             } else {

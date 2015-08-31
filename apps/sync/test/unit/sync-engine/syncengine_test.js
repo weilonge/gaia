@@ -71,20 +71,20 @@ suite('SyncEngine', function() {
         done();
       });
     });
-    // test('rejects its promise if meta/global response status is a 401',
-    //     function(done) {
-    //   var options = {
-    //     URL: SynctoServerFixture.testServerCredentials.URL,
-    //     assertion: SynctoServerFixture.testServerCredentials.assertion,
-    //     xClientState: 'respond 401',
-    //     kB: SynctoServerFixture.testServerCredentials.kB
-    //   };
-    //   var se = new SyncEngine(options);
-    //   se.connect().then(function() {}, function(err) {
-    //     expect(err).to.be.instanceOf(SyncEngine.AuthError);
-    //     done();
-    //   });
-    // });
+    test('rejects its promise if meta/global response status is a 401',
+        function(done) {
+      var options = {
+        URL: SynctoServerFixture.testServerCredentials.URL,
+        assertion: SynctoServerFixture.testServerCredentials.assertion,
+        xClientState: 'respond 401',
+        kB: SynctoServerFixture.testServerCredentials.kB
+      };
+      var se = new SyncEngine(options);
+      se.connect().then(function() {}, function(err) {
+        expect(err).to.be.instanceOf(SyncEngine.AuthError);
+        done();
+      });
+    });
     // test('rejects its promise if meta/global response is not JSON',
     //     function(done) {
     //   var options = {
