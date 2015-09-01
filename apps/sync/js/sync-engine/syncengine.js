@@ -4,34 +4,34 @@
 /* exported SyncEngine */
 
 var SyncEngine = (function() {
-  function WebCryptoTransformer(setCollectionName, setFswc) {
-    if (!setFswc.bulkKeyBundle) {
-      throw new Error('Attempt to register Transformer with no bulk key ' +
-          'bundle!');
+  var WebCryptoTransformer = Kinto.createRemoteTransformer({
+    constructor: function(collectionName, fswc) {
+      if (!fswc.bulkKeyBundle) {
+        throw new Error('Attempt to register Transformer with no bulk key ' +
+            'bundle!');
+      }
+      this.collectionName = collectionName;
+      this.fswc = fswc;
+    },
+
+    encode: function(record) {
+      return this.fswc.encrypt(record.payload, this.collectionName).then(
+          payloadEnc => {
+        record.payload = JSON.stringify(payloadEnc);
+        return record;
+      });
+    },
+
+    decode: function(record) {
+      // Allowing JSON.parse errors to bubble up to the errors list in the
+      // syncResults:
+      return this.fswc.decrypt(JSON.parse(record.payload), this.collectionName)
+          .then(payloadDec => {
+        record.payload = payloadDec;
+        return record;
+      });
     }
-    this.collectionName = setCollectionName;
-    this.fswc = setFswc;
-  }
-  WebCryptoTransformer.prototype =
-      Kinto.transformers.RemoteTransformer.prototype;
-
-  WebCryptoTransformer.prototype.encode = function(record) {
-    return this.fswc.encrypt(record.payload, this.collectionName).then(
-        payloadEnc => {
-      record.payload = JSON.stringify(payloadEnc);
-      return record;
-    });
-  };
-
-  WebCryptoTransformer.prototype.decode = function(record) {
-    // Allowing JSON.parse errors to bubble up to the errors list in the
-    // syncResults:
-    return this.fswc.decrypt(JSON.parse(record.payload), this.collectionName)
-        .then(payloadDec => {
-      record.payload = payloadDec;
-      return record;
-    });
-  };
+  });
 
   var SyncEngine = function(options) {
     if (typeof options !== 'object') {

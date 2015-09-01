@@ -79,8 +79,15 @@ var Kinto = (function() {
       }
     };
   };
-  Kinto.transformers = {
-    RemoteTransformer: function() {}
+
+  Kinto.createRemoteTransformer = function(obj) {
+    var transformerClass = obj.constructor;
+    transformerClass.prototype = {
+      encode: obj.encode,
+      decode: obj.decode
+    };
+    return transformerClass;
   };
+
   return Kinto;
 })();
