@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 'use strict';
 
 /* global
@@ -12,7 +16,6 @@
 
 var App = {
   loadScripts: function() {
-    console.log('loadScripts called');
     return new Promise(function(resolve, reject) {
       LazyLoader.load([
         'js/sync-credentials/iac.js',
@@ -53,3 +56,7 @@ var App = {
         });
   }
 };
+
+//...
+console.log('calling App.init();');
+App.init();

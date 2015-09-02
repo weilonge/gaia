@@ -1,5 +1,21 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+'use strict';
+
+/* global
+  IAC,
+  navigator
+*/
+
+/* exported
+  SyncCredentials
+*/
+
 var SyncCredentials = {
   _getAssertion() {
+    console.log('SynCredentials._getAssertion() called');
     if (this._credentials.assertion) {
       return Promise.resolve();
     }
@@ -23,6 +39,7 @@ var SyncCredentials = {
   },
 
   _getKb() {
+    console.log('SynCredentials._getKb() called');
     if (this._credentials.kB) {
       return Promise.resolve();
     }
@@ -34,6 +51,7 @@ var SyncCredentials = {
   },
 
   _getXClientState() {
+    console.log('SynCredentials._getXClientState() called');
     if (this._credentials.xClientState) {
       return Promise.resolve();
     }
@@ -45,15 +63,20 @@ var SyncCredentials = {
   },
 
   getCredentials() {
-    if (!this._credentials) {
-      this._credentials = {};
+    console.log('SynCredentials.getCredentials() called');
+    if (this._credentials) {
+      return Promise.resolve(this._credentials);
     }
-
+    this._credentials = {};
     return this._getAssertion()
         .then(this._getKb.bind(this))
         .then(this._getXClientState.bind(this))
         .then(() => {
       return this._credentials;
+    }, err => {
+      console.error(err);
+      this._credentials = null;
+      throw err;
     });
   }
 };

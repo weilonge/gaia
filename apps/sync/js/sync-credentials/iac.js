@@ -1,3 +1,16 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+'use strict';
+
+/* global
+  navigator
+*/
+
+/* exported
+  IAC
+*/
 
 var IAC = {
   _ports: {},
@@ -24,14 +37,14 @@ var IAC = {
   request: function(portName, message) {
     return new Promise((resolve, reject) => {
       message.id = Date.now();
-      
+
       var onmessage = (event) => {
         if (!event || !event.data) {
           return reject();
         }
         if (event.data.id != message.id) {
           return;
-        }      
+        }
         resolve(event.data.result);
       };
 
@@ -40,7 +53,7 @@ var IAC = {
           port.postMessage(message);
           port.onmessage = onmessage;
         } else {
-          console.error('No ' + portName + ' port');          
+          console.error('No ' + portName + ' port');
           reject();
         }
       });
