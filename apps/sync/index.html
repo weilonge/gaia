@@ -10,16 +10,11 @@
        Market Customization, since it depends on features and services which
        are still in development.
      </p>
+     <input type="submit" id="sync-button" value="Sync">
   </body>
-  <script src="js/sync-credentials/iac.js"></script>
-  <script src="js/sync-credentials/sync-credentials.js"></script>
-
-  <script src="js/fxsync-webcrypto/stringconversion.js"></script>
-  <script src="js/fxsync-webcrypto/keyderivation.js"></script>
-  <script src="js/fxsync-webcrypto/fxsyncwebcrypto.js"></script>
-
-  <script src="js/ext/kinto.dev.js"></script>
-  <script src="js/sync-engine/syncengine.js"></script>
-
+  <script src="shared/js/lazy_loader.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    App.init();
+  </script>
 </html>
