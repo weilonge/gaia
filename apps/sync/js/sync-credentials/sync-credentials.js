@@ -14,6 +14,8 @@
 */
 
 var SyncCredentials = {
+  _credentials: {},
+
   _getAssertion() {
     console.log('SynCredentials._getAssertion() called');
     if (this._credentials.assertion) {
@@ -64,18 +66,17 @@ var SyncCredentials = {
 
   getCredentials() {
     console.log('SynCredentials.getCredentials() called');
-    if (this._credentials) {
+    if (this._credentials.URL) {
       return Promise.resolve(this._credentials);
     }
-    this._credentials = {};
     return this._getAssertion()
         .then(this._getKb.bind(this))
         .then(this._getXClientState.bind(this))
         .then(() => {
+      this._credentials.URL = 'http://localhost:8000/v1/';
       return this._credentials;
     }, err => {
       console.error(err);
-      this._credentials = null;
       throw err;
     });
   }
