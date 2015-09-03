@@ -1,7 +1,14 @@
 'use strict';
 
-/* global Kinto, FxSyncWebCrypto */
-/* exported SyncEngine */
+/* global
+  crypto,
+  FxSyncWebCrypto,
+  Kinto
+*/
+
+/* exported
+  SyncEngine
+*/
 
 var SyncEngine = (function() {
   var FxSyncIdSchema = Kinto.createIdSchema({
@@ -184,7 +191,7 @@ var SyncEngine = (function() {
         }
         return this._syncCollection('crypto');
       }).then(() => {
-        return this._fetchItem('crypto', 'keys');
+        return this._getItem('crypto', 'keys');
       }).then((cryptoKeysRecord) => {
         var cryptoKeys;
         try {
