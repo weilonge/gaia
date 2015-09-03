@@ -108,7 +108,7 @@ var SyncEngine = (function() {
       var addSpecialCollection = (collectionName, keyName) => {
         this._collections[collectionName] =
             this._kinto.collection(collectionName);
-        this._collections[collectionName].registerIdSchema(
+        this._collections[collectionName].use(
             new SpecialIdSchema(collectionName, keyName));
       };
       addSpecialCollection('meta', 'global');
