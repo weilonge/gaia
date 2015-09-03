@@ -4,6 +4,41 @@
 /* exported SyncEngine */
 
 var SyncEngine = (function() {
+  var FxSyncIdSchema = Kinto.createIdSchema({
+    constructor: function(collectionName) {
+      this.collectionName = collectionName;
+    },
+
+    generate: function() {
+      var bytes = new Uint8Array(9);
+      crypto.getRandomValues(bytes);
+      var binStr = '';
+      for (var i=0; i<9; i++) {
+          binStr += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binStr);
+    },
+
+    validate: function(id) {
+      return /^[A-Za-z0-9+/]{12}$/.test(id);
+    }
+  });
+
+  var SpecialIdSchema = Kinto.createIdSchema({
+    constructor: function(collectionName, keyName) {
+      this.collectionName = collectionName;
+      this.keyName = keyName;
+    },
+
+    generate: function() {
+      return this.keyName;
+    },
+
+    validate: function(id) {
+      return (id === this.keyName);
+    }
+  });
+
   var WebCryptoTransformer = Kinto.createRemoteTransformer({
     constructor: function(collectionName, fswc) {
       if (!fswc.bulkKeyBundle) {
@@ -70,30 +105,19 @@ var SyncEngine = (function() {
           'X-Client-State': kintoCredentials.xClientState
         }
       });
-      this._collections.meta = this._kinto.collection('meta');
-      this._collections.crypto = this._kinto.collection('crypto');
+      var addSpecialCollection = (collectionName, keyName) => {
+        this._collections[collectionName] =
+            this._kinto.collection(collectionName);
+        this._collections[collectionName].registerIdSchema(
+            new SpecialIdSchema(collectionName, keyName));
+      };
+      addSpecialCollection('meta', 'global');
+      addSpecialCollection('crypto', 'keys');
     },
 
 
     _getItem: function(collectionName, itemName) {
       return this._collections[collectionName].get(itemName);
-    },
-
-    _getItemByIndex: function(collectionName, itemIndex) {
-      return this._collections[collectionName].list().then(collRecords => {
-        if (typeof collRecords === 'object' &&
-            typeof collRecords.data === 'object' &&
-            typeof collRecords.data[itemIndex] === 'object' &&
-            typeof collRecords.data[itemIndex].payload !== 'undefined') {
-          return {
-            data: {
-              payload: collRecords.data[itemIndex].payload
-            }
-          };
-        } else {
-          return null;
-        }
-      });
     },
 
     _syncCollection: function(collectionName) {
@@ -152,12 +176,7 @@ var SyncEngine = (function() {
 
     connect: function() {
       return this._syncCollection('meta').then(() => {
-        // Alternative code to work around https://github.com \
-        //     /mozilla-services/syncto/issues/6
-        //
-        // //this._getItem('meta', 'global').then(metaGlobal => {
-        return this._getItemByIndex('meta', 0);
-        //
+        return this._getItem('meta', 'global');
       }).then(metaGlobal => {
         if (!this._storageVersionOK(metaGlobal)) {
           return Promise.reject('Incompatible storage version or storage ' +
@@ -165,12 +184,7 @@ var SyncEngine = (function() {
         }
         return this._syncCollection('crypto');
       }).then(() => {
-        // Alternative code to work around https://github.com \
-        //     /mozilla-services/syncto/issues/6
-        //
-        // //return this._fetchItem('crypto', 'keys');
-        return this._getItemByIndex('crypto', 0);
-        //
+        return this._fetchItem('crypto', 'keys');
       }).then((cryptoKeysRecord) => {
         var cryptoKeys;
         try {
@@ -191,6 +205,8 @@ var SyncEngine = (function() {
     registerAdapter: function(collectionName, adapter) {
       this._collections[collectionName] = this._kinto.collection(
           collectionName);
+      this._collections[collectionName].use(new FxSyncIdSchema(
+          collectionName));
       this._collections[collectionName].use(new WebCryptoTransformer(
           collectionName, this._fswc));
       this._adapters[collectionName] = adapter;

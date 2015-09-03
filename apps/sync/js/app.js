@@ -18,12 +18,15 @@ var App = {
   loadScripts: function() {
     return new Promise(function(resolve, reject) {
       LazyLoader.load([
-        'js/sync-credentials/iac.js',
-        'js/sync-credentials/sync-credentials.js',
+        //'js/sync-credentials/iac.js',
+        //'js/sync-credentials/sync-credentials.js',
+        'js/sync-credentials/sync-credentials-mock.js',
 
         'js/fxsync-webcrypto/stringconversion.js',
         'js/fxsync-webcrypto/keyderivation.js',
         'js/fxsync-webcrypto/fxsyncwebcrypto.js',
+
+        'js/adapters/history-mock.js',
 
         'js/ext/kinto.dev.js',
         'js/sync-engine/syncengine.js'
@@ -36,7 +39,7 @@ var App = {
       .addEventListener('click', App.sync.bind(App));
   },
 
-  _getSyncEngine: function() {
+  _connectSyncEngine: function() {
     if (this._syncEngine) {
       return Promise.resolve();
     }
@@ -46,17 +49,32 @@ var App = {
     });
   },
 
+  loadAdapter(collectionName) {
+    if (collectionName !== 'history') {
+      throw new Error('not implemented yet');
+    }
+    return new Promise((resolve, reject) => {
+      LazyLoader.load(['js/adapters/history-mock.js'], () => {
+        this._syncEngine.registerAdapter('history', HistoryAdapter);
+        resolve();
+      });
+    });
+  },
+
   sync: function() {
-    return this.loadScripts()
-        .then(this._getSyncEngine.bind(this))
-        .then(() => {
-          return this._syncEngine.syncNow.bind(this._syncEngine);
-        }, err => {
-          console.error(err);
-        });
+    console.log('Syncing...');
+    return this.loadScripts().then(() => {
+      return this._connectSyncEngine();
+    }).then(() => {
+      return this.loadAdapter('history');
+    }).then(() => {
+      return this._syncEngine.syncNow();
+    }).then(() => {
+      console.log('Sync success.');
+    }, err => {
+      console.error('Sync failure.', err);
+    });
   }
 };
 
-//...
-console.log('calling App.init();');
 App.init();
