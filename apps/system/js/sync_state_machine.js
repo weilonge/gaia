@@ -45,7 +45,7 @@
    *   ...
    * }
    */
-  const transitions = {
+  const SyncTransitions = {
     enable: {
       'disabled': 'enabling',
       'errored': 'enabled'
@@ -81,12 +81,16 @@
 
   SyncStateMachine.SUB_MODULES = [];
 
-  BaseModule.create(SyncStateMachine, {
-    name: 'SyncStateMachine',
-    DEBUG: false,
-    EVENT_PREFIX: 'Sync',
+  var stateMachineFactory = function (config) {
+    var stateMachine = config.stateMachine,
+      transitions = config.transitions;
 
-    _state: 'disabled',
+  BaseModule.create(stateMachine, {
+    name: config.name,
+    DEBUG: false,
+    EVENT_PREFIX: config.eventPrefix,
+
+    _state: config.initState,
 
     /**
      * Creates the state transition function per each event.
@@ -162,7 +166,17 @@
     }
   });
 
+  };
+
+  stateMachineFactory({
+    name: 'SyncStateMachine',
+    stateMachine: SyncStateMachine,
+    transitions: SyncTransitions,
+    initState: 'disabled',
+    eventPrefix: 'Sync'
+  });
+
   // Exported only for testing purposes.
-  exports.SyncStateMachineTransitions = transitions;
+  exports.SyncStateMachineTransitions = SyncTransitions;
 
 }(window));
