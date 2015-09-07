@@ -5,6 +5,7 @@
 'use strict';
 
 /* global
+  HistoryAdapter,
   LazyLoader,
   SyncEngine,
   SyncCredentials
@@ -22,9 +23,9 @@ var App = {
         //'js/sync-credentials/sync-credentials.js',
         'js/sync-credentials/sync-credentials-mock.js',
 
-        'js/fxsync-webcrypto/stringconversion.js',
-        'js/fxsync-webcrypto/keyderivation.js',
-        'js/fxsync-webcrypto/fxsyncwebcrypto.js',
+        'js/crypto/stringconversion.js',
+        'js/crypto/keyderivation.js',
+        'js/crypto/fxsyncwebcrypto.js',
 
         'js/adapters/history-mock.js',
 

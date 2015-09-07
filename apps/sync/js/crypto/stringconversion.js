@@ -1,10 +1,16 @@
-/* exported StringConversion */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 'use strict';
 
-var StringConversion = (function string_conversion() {
+/* exported
+  StringConversion
+*/
+
+var StringConversion = (() => {
   return {
-    rawStringToByteArray: function(str) {
+    rawStringToByteArray(str) {
       if (typeof str != 'string') {
         throw new Error('Not a string');
       }
@@ -16,19 +22,18 @@ var StringConversion = (function string_conversion() {
       return byteArray;
     },
 
-    base64StringToByteArray: function(base64) {
+    base64StringToByteArray(base64) {
       if (typeof base64 != 'string' || base64.length % 4 !== 0) {
-        throw new Error(
-             'Number of base64 digits must be a multiple of 4 to convert to ' +
-             'bytes');
+        throw new Error(`Number of base64 digits must be a multiple of 4 to con\
+vert to bytes`);
       }
-      return this.rawStringToByteArray(window.atob(base64));
+      return StringConversion.rawStringToByteArray(window.atob(base64));
     },
 
-    hexStringToByteArray: function(hexStr) {
+    hexStringToByteArray(hexStr) {
       if (typeof hexStr != 'string' || hexStr.length % 2 !== 0) {
-        throw new Error(
-             'Must have an even number of hex digits to convert to bytes');
+        throw new Error(`Must have an even number of hex digits to convert to b\
+ytes`);
       }
       var numBytes = hexStr.length / 2;
       var byteArray = new Uint8Array(numBytes);
@@ -39,7 +44,7 @@ var StringConversion = (function string_conversion() {
       return byteArray;
     },
 
-    byteArrayToBase64String: function(bytes) {
+    byteArrayToBase64String(bytes) {
       if (!(bytes instanceof Uint8Array)) {
         throw new Error('Not a Uint8Array');
       }
@@ -51,15 +56,15 @@ var StringConversion = (function string_conversion() {
       return window.btoa(binary);
     },
 
-    arrayBufferToBase64String: function(buffer) {
+    arrayBufferToBase64String(buffer) {
       if (!(buffer instanceof ArrayBuffer)) {
         throw new Error('Not an ArrayBuffer');
       }
       var bytes = new Uint8Array(buffer);
-      return this.byteArrayToBase64String(bytes);
+      return StringConversion.byteArrayToBase64String(bytes);
     },
 
-    byteArrayToHexString: function(bytes) {
+    byteArrayToHexString(bytes) {
       if (!(bytes instanceof Uint8Array)) {
         throw new Error('Not a Uint8Array');
       }
@@ -71,12 +76,12 @@ var StringConversion = (function string_conversion() {
       return hex;
     },
 
-    arrayBufferToHexString: function(buffer) {
+    arrayBufferToHexString(buffer) {
       if (!(buffer instanceof ArrayBuffer)) {
         throw new Error('Not an ArrayBuffer');
       }
       var bytes = new Uint8Array(buffer);
-      return this.byteArrayToHexString(bytes);
+      return StringConversion.byteArrayToHexString(bytes);
     }
   };
 })();
