@@ -30,6 +30,10 @@ var SyncEngine = (function() {
       return window.btoa(binStr).replace('+', '-').replace('/', '_');
     },
     validate: function(id) {
+      if ((this.collectionName === 'bookmarks') &&
+          (['menu', 'toolbar'].indexOf(id) !== -1)) {
+        return true;
+      }
       // FxSync id's should be 12 ASCII characters, representing 9 bytes of data
       // in modified Base64 for URL variants exist, where the '+' and '/'
       // characters of standard Base64 are respectively replaced by '-' and '_'
@@ -156,6 +160,7 @@ e!`);
       .catch(err => {
         throw err;
       }).then(syncResults => {
+        console.log('Sync results', collectionName, syncResults);
         if (syncResults.ok) {
           return syncResults;
         } else {
@@ -269,6 +274,8 @@ rse crypto/keys payload as JSON`));
     this.message = 'unauthorized';
   };
   SyncEngine.UnrecoverableError.prototype = Object.create(Error.prototype);
+
+  SyncEngine.DataAdapterClasses = {};
 
   return SyncEngine;
 })();

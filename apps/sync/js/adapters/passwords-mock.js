@@ -8,15 +8,15 @@
   SyncEngine
 */
 
-SyncEngine.DataAdapterClasses.history = {
+SyncEngine.DataAdapterClasses.passwords = {
   update(kintoCollection) {
-    console.log('HistoryAdapter#update...');
+    console.log('PasswordsAdapter#update...');
     return kintoCollection.list().then(list => {
-      console.log('Got history data', list);
+      console.log('Got passwords data', list);
     });
   },
   handleConflict(local, remote) {
-    console.log('HistoryAdapter#handleConflict', local, remote);
+    console.log('PasswordsAdapter#handleConflict', local, remote);
     return remote;
   }
 };

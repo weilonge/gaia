@@ -8,15 +8,15 @@
   SyncEngine
 */
 
-SyncEngine.DataAdapterClasses.history = {
+SyncEngine.DataAdapterClasses.bookmarks = {
   update(kintoCollection) {
-    console.log('HistoryAdapter#update...');
+    console.log('BookmarksAdapter#update...');
     return kintoCollection.list().then(list => {
-      console.log('Got history data', list);
+      console.log('Got bookmarks data', list);
     });
   },
   handleConflict(local, remote) {
-    console.log('HistoryAdapter#handleConflict', local, remote);
+    console.log('BookmarksAdapter#handleConflict', local, remote);
     return remote;
   }
 };

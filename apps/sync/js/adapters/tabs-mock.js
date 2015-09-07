@@ -8,15 +8,15 @@
   SyncEngine
 */
 
-SyncEngine.DataAdapterClasses.history = {
+SyncEngine.DataAdapterClasses.tabs = {
   update(kintoCollection) {
-    console.log('HistoryAdapter#update...');
+    console.log('TabsAdapter#update...');
     return kintoCollection.list().then(list => {
-      console.log('Got history data', list);
+      console.log('Got tabs data', list);
     });
   },
   handleConflict(local, remote) {
-    console.log('HistoryAdapter#handleConflict', local, remote);
+    console.log('TabsAdapter#handleConflict', local, remote);
     return remote;
   }
 };

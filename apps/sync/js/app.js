@@ -5,7 +5,6 @@
 'use strict';
 
 /* global
-  HistoryAdapter,
   LazyLoader,
   SyncEngine,
   SyncCredentials
@@ -26,8 +25,6 @@ var App = {
         'js/crypto/stringconversion.js',
         'js/crypto/keyderivation.js',
         'js/crypto/fxsyncwebcrypto.js',
-
-        'js/adapters/history-mock.js',
 
         'js/ext/kinto.dev.js',
         'js/sync-engine/syncengine.js'
@@ -51,12 +48,10 @@ var App = {
   },
 
   loadAdapter(collectionName) {
-    if (collectionName !== 'history') {
-      throw new Error('not implemented yet');
-    }
     return new Promise((resolve, reject) => {
-      LazyLoader.load(['js/adapters/history-mock.js'], () => {
-        this._syncEngine.registerAdapter('history', HistoryAdapter);
+      LazyLoader.load([`js/adapters/${collectionName}-mock.js`], () => {
+        this._syncEngine.registerAdapter(collectionName,
+            SyncEngine.DataAdapterClasses[collectionName]);
         resolve();
       });
     });
@@ -67,7 +62,12 @@ var App = {
     return this.loadScripts().then(() => {
       return this._connectSyncEngine();
     }).then(() => {
-      return this.loadAdapter('history');
+      return Promise.all([
+        this.loadAdapter('history'),
+        this.loadAdapter('passwords'),
+        this.loadAdapter('bookmarks'),
+        this.loadAdapter('tabs')
+      ]);
     }).then(() => {
       return this._syncEngine.syncNow();
     }).then(() => {
