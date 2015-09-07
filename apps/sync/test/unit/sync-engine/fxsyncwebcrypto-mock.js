@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 'use strict';
 
 /* global SynctoServerFixture, requireApp */
@@ -23,14 +27,13 @@ FxSyncWebCrypto.prototype = {
       this.bulkKeyBundle = true;
       return Promise.resolve();
     } else {
-      return Promise.reject('SyncKeys hmac could not be verified with current' +
-          ' main key');
+      return Promise.reject(`SyncKeys hmac could not be verified with current m\
+ain key`);
     }
   },
-  encrypt: function() {
+  encrypt: function(payload) {
     if (this.shouldWork) {
-      return Promise.resolve(JSON.parse(
-          SynctoServerFixture.remoteData.history.payload));
+      return Promise.resolve({ mockEncrypted: JSON.stringify(payload) });
     } else {
       return Promise.reject();
     }
@@ -39,14 +42,14 @@ FxSyncWebCrypto.prototype = {
     var decryptablePayload = JSON.parse(
         SynctoServerFixture.remoteData.history.payload);
     if (this.shouldWork &&
-        record.ciphertext ===
-            decryptablePayload.ciphertext &&
+        record.ciphertext === decryptablePayload.ciphertext &&
         record.IV === decryptablePayload.IV &&
         record.hmac === decryptablePayload.hmac) {
       return Promise.resolve(
           SynctoServerFixture.historyEntryDec.payload);
     } else {
-      return Promise.reject('payload.ciphertext is not a Base64 string');
+      return Promise.reject(new Error(`payload.ciphertext is not a Base64 strin\
+g`));
     }
   }
 };

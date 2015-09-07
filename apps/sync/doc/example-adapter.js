@@ -10,9 +10,10 @@ var ExampleAdapter = {
       }
     });
   },
-  handleConflict: function(local, remote) {
-    console.log('example adapter handleConflict function called with:', local,
-        remote);
-    return local;
+  handleConflict: function(conflict) {
+    console.log('example adapter handleConflict function called with:',
+                conflict.local,
+                conflict.remote);
+    return conflict.local;
   }
 };
