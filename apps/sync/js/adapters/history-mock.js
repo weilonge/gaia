@@ -4,15 +4,56 @@
 
 'use strict';
 
-/* global
+/* global IAC,
   SyncEngine
 */
 
+var HistoryAPI = {
+  addPlaces: function(places) {
+    return IAC.request('sync-history', {
+      method: 'addPlaces',
+      args: [places]
+    });
+  },
+
+  addPlace: function(place) {
+    return IAC.request('sync-history', {
+      method: 'addPlace',
+      args: [place]
+    });
+  }
+};
+
 SyncEngine.DataAdapterClasses.history = {
   update(kintoCollection) {
-    console.log('HistoryAdapter#update...');
+    function updateHistoryCollection(list) {
+      var historyRecords = list.data;
+      var places = [];
+      historyRecords.forEach((decryptedRecord) => {
+        var record = decryptedRecord.payload;
+        if (!record.histUri || !record.visits || !record.visits[0]) {
+          return;
+        }
+
+        var visits = [];
+        record.visits.forEach((elem) => {
+          visits.push(Math.floor(elem.date / 1000));
+        });
+
+        var place = {
+          url: record.histUri,
+          title: record.title,
+          visits: visits,
+          last_modified: decryptedRecord.last_modified
+        };
+        places.push(place);
+      });
+
+      return HistoryAPI.addPlaces(places);
+    }
+
     return kintoCollection.list().then(list => {
-      console.log('Got history data', list);
+      return updateHistoryCollection(list);
     });
   },
   handleConflict(local, remote) {

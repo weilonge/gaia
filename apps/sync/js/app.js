@@ -20,7 +20,7 @@ var App = {
   loadScripts: function() {
     return new Promise(function(resolve, reject) {
       LazyLoader.load([
-        //'js/sync-credentials/iac.js',
+        'js/sync-credentials/iac.js',
         //'js/sync-credentials/sync-credentials.js',
         'js/sync-credentials/sync-credentials-mock.js',
 
