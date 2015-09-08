@@ -18,7 +18,7 @@ var App = {
   loadScripts: function() {
     return new Promise(function(resolve, reject) {
       LazyLoader.load([
-        //'js/sync-credentials/iac.js',
+        'js/sync-credentials/iac.js',
         //'js/sync-credentials/sync-credentials.js',
         'js/sync-credentials/sync-credentials-mock.js',
 
@@ -64,9 +64,9 @@ var App = {
     }).then(() => {
       return Promise.all([
         this.loadAdapter('history'),
-        this.loadAdapter('passwords'),
-        this.loadAdapter('bookmarks'),
-        this.loadAdapter('tabs')
+        //this.loadAdapter('passwords'),
+        //this.loadAdapter('bookmarks'),
+        //this.loadAdapter('tabs')
       ]);
     }).then(() => {
       return this._syncEngine.syncNow();
