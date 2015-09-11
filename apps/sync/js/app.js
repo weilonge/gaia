@@ -33,43 +33,40 @@ var App = {
   },
 
   init: function() {
+    this._syncEngine = null;
+    this._adapters = {};
     document.getElementById('sync-button')
       .addEventListener('click', App.sync.bind(App));
   },
 
-  _connectSyncEngine: function() {
+  _ensureSyncEngine: function(collectionNames) {
     if (this._syncEngine) {
       return Promise.resolve();
     }
-    return SyncCredentials.getCredentials().then(credentials => {
+    return this.loadScripts().then(() => {
+      SyncEngine.DataAdapterClasses = {};
+      return Promise.all(collectionNames.map(collectionName => {
+        return LazyLoader.load([`js/adapters/${collectionName}-mock.js`]);
+      }));
+    }).then(() => {
+      return SyncCredentials.getCredentials();
+    }).then(credentials => {
+      credentials.adapters = SyncEngine.DataAdapterClasses;
+      console.log('SyncEngine options', credentials);
       this._syncEngine = new SyncEngine(credentials);
-      return this._syncEngine.connect();
-    });
-  },
-
-  loadAdapter(collectionName) {
-    return new Promise((resolve, reject) => {
-      LazyLoader.load([`js/adapters/${collectionName}-mock.js`], () => {
-        this._syncEngine.registerAdapter(collectionName,
-            SyncEngine.DataAdapterClasses[collectionName]);
-        resolve();
-      });
     });
   },
 
   sync: function() {
+    var collectionNames = [
+      'history',
+      //'passwords',
+      //'bookmarks',
+      'tabs'
+    ];
     console.log('Syncing...');
-    return this.loadScripts().then(() => {
-      return this._connectSyncEngine();
-    }).then(() => {
-      return Promise.all([
-        this.loadAdapter('history'),
-        this.loadAdapter('passwords'),
-        this.loadAdapter('bookmarks'),
-        this.loadAdapter('tabs')
-      ]);
-    }).then(() => {
-      return this._syncEngine.syncNow();
+      return this._ensureSyncEngine(collectionNames).then(() => {
+      return this._syncEngine.syncNow(collectionNames);
     }).then(() => {
       console.log('Sync success.');
     }, err => {
