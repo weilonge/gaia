@@ -7,6 +7,12 @@
      "name": "The Gaia Team",
      "url": "https://github.com/mozilla-b2g/gaia"
   },
+  "datastores-access": {
+    "places": {
+      "readonly": true,
+      "description": "Stores data about browsing history."
+    }
+  },
   "permissions": {
     "moz-firefox-accounts": {}
   }

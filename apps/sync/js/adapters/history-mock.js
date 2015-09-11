@@ -8,7 +8,82 @@
   SyncEngine
 */
 
-var HistoryAPI = {
+var HistoryHelper = {
+  getDataStore: function() {
+    return new Promise((resolve, reject) => {
+      if (this._placesStore) {
+        resolve(this._placesStore);
+        return;
+      }
+      navigator.getDataStores('places').then(stores => {
+        this._placesStore = stores[0];
+        resolve(this._placesStore);
+      });
+    });
+  },
+
+  set syncedDataStoreRevisionId(rId) {
+    window.asyncStorage.setItem('LastSyncedStatus::DataStore::Rid', rId);
+  },
+  get syncedDataStoreRevisionId() {
+    return new Promise((resolve, reject) => {
+      window.asyncStorage.
+      getItem('LastSyncedStatus::DataStore::Rid', (rId) => {
+        resolve(rId);
+      });
+    });
+  },
+  set syncedCollectionModifiedTime(mtime) {
+    window.asyncStorage.setItem('LastSyncedStatus::Collection::mtime', mtime);
+  },
+  get syncedCollectionModifiedTime() {
+    return new Promise((resolve, reject) => {
+      window.asyncStorage.
+      getItem('LastSyncedStatus::Collection::mtime', (mtime) => {
+        resolve(mtime);
+      });
+    });
+  },
+  updateLastSyncedStatus() {
+    this.getDataStore().then((placesStore) => {
+      this.syncedDataStoreRevisionId = placesStore.revisionId;
+    });
+  },
+
+  syncStore: function(revisionId) {
+    return new Promise((resolve, reject) => {
+      var cursor, tasks = [];
+      this.getDataStore().then(() => {
+        cursor = this._placesStore.sync(revisionId);
+        runNextTask(cursor);
+      });
+
+      function runNextTask(cursor) {
+       cursor.next().then(function(task) {
+         manageTask(cursor, task);
+       });
+      }
+
+      function manageTask(cursor, task) {
+        tasks.push(task);
+        if (task.operation == 'done') {
+          // Finished adding contacts!
+          resolve(tasks);
+          return;
+        }
+        runNextTask(cursor);
+      }
+    });
+  },
+
+  retrieveFxSyncId(url) {
+    return this.getDataStore().then((placesStore) => {
+      return placesStore.get(url);
+    }).then((placeRecord) => {
+      return Promise.resolve(placeRecord ? placeRecord.fxsyncId : null);
+    });
+  },
+
   addPlaces: function(places) {
     return IAC.request('sync-history', {
       method: 'addPlaces',
@@ -25,11 +100,19 @@ var HistoryAPI = {
 };
 
 SyncEngine.DataAdapterClasses.history = {
-  update(kintoCollection) {
+  _fullSync(kintoCollection, lastModifiedTime) {
     function updateHistoryCollection(list) {
       var historyRecords = list.data;
       var places = [];
-      historyRecords.forEach((decryptedRecord) => {
+      var i;
+      for (i = 0; i < historyRecords.length; i++) {
+        if (historyRecords[i].last_modified <= lastModifiedTime) {
+          break;
+        }
+      }
+      var partialRecords = historyRecords.slice(0, i);
+      console.log(partialRecords);
+      partialRecords.forEach((decryptedRecord) => {
         var record = decryptedRecord.payload;
         if (!record.histUri || !record.visits || !record.visits[0]) {
           return;
@@ -44,20 +127,83 @@ SyncEngine.DataAdapterClasses.history = {
           url: record.histUri,
           title: record.title,
           visits: visits,
-          last_modified: decryptedRecord.last_modified
+          fxsyncId: record.id
         };
         places.push(place);
       });
 
-      return HistoryAPI.addPlaces(places);
+      return HistoryHelper.addPlaces(places).then(() => {
+        if (partialRecords.length > 0) {
+          HistoryHelper.syncedCollectionModifiedTime =
+            partialRecords[0].last_modified;
+          console.log(partialRecords[0].last_modified);
+        }
+        return Promise.resolve(false);
+      });
     }
 
     return kintoCollection.list().then(list => {
       return updateHistoryCollection(list);
     });
   },
-  handleConflict(local, remote) {
-    console.log('HistoryAdapter#handleConflict', local, remote);
-    return remote;
+  update(kintoCollection) {
+    var syncQueueToSync;
+
+    /* Step 1:
+      Retrieve the changes in Places Data Store by using DataStore.sync() and
+      cache the results to SyncQueue.
+    */
+    return HistoryHelper.syncedDataStoreRevisionId.then((lastRevisionId) => {
+      return HistoryHelper.syncStore(lastRevisionId);
+    }).then((tasks) => {
+      syncQueueToSync = tasks;
+    })
+
+    /* Step 2:
+      Write History Collection records to PlacesDS.
+    */
+    .then(() => {
+      return HistoryHelper.syncedCollectionModifiedTime;
+    })
+    .then((mtime) => {
+      return this._fullSync(kintoCollection, mtime);
+    })
+
+    /* Step 3:
+      Update FxSync ID for records in SyncQueueToSync for updating records to
+      History Collection. There will be two cases for these records:
+        1. No FxSync ID exists, and it means it's a new record.
+        2. FxSync ID exists, and it means the record should be updated to the
+           record with the same ID.
+
+      Besides, case 2 will only happen at the first time sync because the
+      records from PlacesDS are without FxSync ID before writing the data from
+      FxSync. At the following sync, every record in PlacesDS has their own
+      FxSync ID.
+    */
+    .then(() => {
+      return Promise.all(syncQueueToSync.map((syncingItem, index) => {
+        var url = syncingItem.id;
+        if (!url || syncingItem.data.fxsyncId) {
+          return Promise.resolve();
+        }
+        return HistoryHelper.retrieveFxSyncId(url).then((fxsyncId) => {
+          syncingItem.data.fxsyncId = fxsyncId;
+        });
+      }));
+    })
+
+    /* Step 4:
+      Push all waiting-for-syncing records to FxSync and update last synced
+      revision id.
+    */
+    .then(() => {
+      console.log(syncQueueToSync);
+      HistoryHelper.updateLastSyncedStatus();
+    });
+  },
+  handleConflict(conflict) {
+    console.log('HistoryAdapter#handleConflict', conflict);
+    return Promise.resolve(conflict.remote);
   }
 };
