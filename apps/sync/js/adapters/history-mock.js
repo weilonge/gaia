@@ -8,7 +8,33 @@
   SyncEngine
 */
 
-var HistoryAPI = {
+var HistoryHelper = {
+  getDataStore: function() {
+    return new Promise((resolve, reject) => {
+      if (this._placesStore) {
+        resolve(this._placesStore);
+        return;
+      }
+      navigator.getDataStores('places').then(stores => {
+        this._placesStore = stores[0];
+        resolve(this._placesStore);
+      });
+    });
+  },
+
+  lastSyncedStatus: {
+    set(rId) {
+      window.asyncStorage.setItem('historyLastSyncedRevisionId', rId);
+    },
+    get() {
+      return new Promise((resolve, reject) => {
+        window.asyncStorage.getItem('historyLastSyncedRevisionId', (rId) => {
+          resolve(rId);
+        });
+      });
+    }
+  },
+
   addPlaces: function(places) {
     return IAC.request('sync-history', {
       method: 'addPlaces',
@@ -50,11 +76,16 @@ SyncEngine.DataAdapterClasses.history = {
         places.push(place);
       });
 
-      return HistoryAPI.addPlaces(places);
+      return HistoryHelper.addPlaces(places);
     }
 
     return kintoCollection.list().then(list => {
       return updateHistoryCollection(list);
+    }).then(() => {
+      return HistoryHelper.getDataStore().then((placesStore) => {
+        HistoryHelper.lastSyncedStatus.set(placesStore.revisionId);
+        return Promise.resolve();
+      });
     });
   },
   update(kintoCollection) {
