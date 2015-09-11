@@ -2,11 +2,20 @@
   "name": "Sync",
   "description": "Syncs data with Firefox Sync",
   "type": "certified",
-  "role": "system",
   "launch_path": "/index.html",
   "developer": {
      "name": "The Gaia Team",
      "url": "https://github.com/mozilla-b2g/gaia"
+  },
+  "datastores-access": {
+    "places": {
+      "access": "readonly",
+      "description": "Stores data about browsing history."
+    },
+    "bookmarks_store": {
+      "access": "readonly",
+      "description": "Stores data about bookmarks"
+    }
   },
   "permissions": {
     "moz-firefox-accounts": {}

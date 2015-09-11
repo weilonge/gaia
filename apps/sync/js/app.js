@@ -14,6 +14,8 @@
   App
 */
 
+var syncEngine;
+
 var App = {
   loadScripts: function() {
     return new Promise(function(resolve, reject) {
@@ -43,6 +45,7 @@ var App = {
     }
     return SyncCredentials.getCredentials().then(credentials => {
       this._syncEngine = new SyncEngine(credentials);
+      syncEngine = this._syncEngine;
       return this._syncEngine.connect();
     });
   },
