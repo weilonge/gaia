@@ -7987,10 +7987,10 @@ var Api = (function () {
       var queryString = "";
       var headers = Object.assign({}, this.optionHeaders, options.headers);
 
-      if (options.lastModified) {
-        queryString = "?_since=" + options.lastModified;
-        headers["If-None-Match"] = (0, _utilsJs.quote)(options.lastModified);
-      }
+      //if (options.lastModified) {
+      //  queryString = "?_since=" + options.lastModified;
+      //  headers["If-None-Match"] = (0, _utilsJs.quote)(options.lastModified);
+      //}
 
       return this.fetchServerSettings().then(function (_) {
         return _this3.http.request(recordsUrl + queryString, { headers: headers });
