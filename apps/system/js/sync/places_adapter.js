@@ -32,6 +32,7 @@
         newPlace.visits.sort((a, b) => {
           return b - a;
         });
+        newPlace.fxsyncId = place.fxsyncId;
         cb(newPlace);
       });
     },

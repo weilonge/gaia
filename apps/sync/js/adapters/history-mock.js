@@ -25,7 +25,7 @@ var HistoryAPI = {
 };
 
 SyncEngine.DataAdapterClasses.history = {
-  update(kintoCollection) {
+  _firstTimeSync(kintoCollection) {
     function updateHistoryCollection(list) {
       var historyRecords = list.data;
       var places = [];
@@ -44,6 +44,7 @@ SyncEngine.DataAdapterClasses.history = {
           url: record.histUri,
           title: record.title,
           visits: visits,
+          fxsyncId: record.id,
           last_modified: decryptedRecord.last_modified
         };
         places.push(place);
@@ -55,6 +56,9 @@ SyncEngine.DataAdapterClasses.history = {
     return kintoCollection.list().then(list => {
       return updateHistoryCollection(list);
     });
+  },
+  update(kintoCollection) {
+    return this._firstTimeSync(kintoCollection);
   },
   handleConflict(local, remote) {
     console.log('HistoryAdapter#handleConflict', local, remote);
