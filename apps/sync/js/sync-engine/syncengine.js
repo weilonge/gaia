@@ -74,6 +74,11 @@ e!`);
     decode: function(record) {
       // Allowing JSON.parse errors to bubble up to the errors list in the
       // syncResults:
+      if (typeof record.payload === 'object' && record.payload.id) {
+        // If record.payload is an object which has a valid ID,
+        // that means it's a decrypted record which can be returned.
+        return record;
+      }
       return this.fswc.decrypt(JSON.parse(record.payload), this.collectionName)
       .then(payloadDec => {
         record.payload = payloadDec;
