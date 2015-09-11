@@ -13,14 +13,13 @@
       var url = place.url;
       var visits =  place.visits;
       var title = place.title;
-      var lastModifiedFromRemote = place.last_modified;
 
       var places = appWindowManager.places;
       return places.editPlace(url, (newPlace, cb) => {
         var isNewPlace = newPlace.visits.length === 0;
         if(isNewPlace && title){
           newPlace.title = title;
-        } else if (lastModifiedFromRemote >= newPlace.visits[0]) {
+        } else if (visits[0] >= newPlace.visits[0]) {
           newPlace.title = title;
         }
         newPlace.visits = newPlace.visits || [];
@@ -32,6 +31,7 @@
         newPlace.visits.sort((a, b) => {
           return b - a;
         });
+        newPlace.fxsyncId = place.fxsyncId;
         cb(newPlace);
       });
     },
