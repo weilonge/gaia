@@ -271,6 +271,9 @@ define('fxsync', ['modules/settings_utils', 'shared/settings_listener'
       this.ensureDb().then(db => {
         SyncCredentials.getKeys().then(credentials => {
           this._credentialCache.kB = credentials.kB;
+          console.log('      assertion: \'' + this._credentialCache.synctoCredentials.assertion + '\',');
+          console.log('      xClientState: \'' + this._credentialCache.synctoCredentials.xClientState + '\',');
+          console.log('      kB: \'' + this._credentialCache.kB + '\'');
           document.querySelector('#sync-account').textContent = credentials.email;
 
           var se = new SyncEngine(this._credentialCache.synctoCredentials, ['history'], this._credentialCache.kB);
