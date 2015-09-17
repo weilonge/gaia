@@ -14,6 +14,8 @@
   App
 */
 
+var SYNC_DEBUG = {};
+
 var App = {
   loadScripts: function() {
     return new Promise(function(resolve, reject) {
@@ -54,15 +56,16 @@ var App = {
       credentials.adapters = SyncEngine.DataAdapterClasses;
       console.log('SyncEngine options', credentials);
       this._syncEngine = new SyncEngine(credentials);
+      SYNC_DEBUG.syncEngine = this._syncEngine;
     });
   },
 
   sync: function() {
     var collectionNames = [
-      'history',
+      'history'
       //'passwords',
       //'bookmarks',
-      'tabs'
+      //'tabs'
     ];
     console.log('Syncing...');
       return this._ensureSyncEngine(collectionNames).then(() => {
