@@ -143,6 +143,10 @@ SyncEngine.DataAdapterClasses.history = {
         places.push(place);
       });
 
+      if (places.length === 0) {
+        return Promise.resolve(false);
+      }
+
       return HistoryHelper.addPlaces(places).then(() => {
         if (partialRecords.length > 0) {
           HistoryHelper.syncedCollectionModifiedTime =
