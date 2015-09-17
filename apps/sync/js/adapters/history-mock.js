@@ -9,7 +9,7 @@
 */
 
 var HistoryHelper = {
-  getDataStore: function() {
+  getDataStore() {
     return new Promise((resolve, reject) => {
       if (this._placesStore) {
         resolve(this._placesStore);
@@ -50,7 +50,7 @@ var HistoryHelper = {
     });
   },
 
-  syncStore: function(revisionId) {
+  syncStore(revisionId) {
     return new Promise((resolve, reject) => {
       var cursor, tasks = [];
       this.getDataStore().then(() => {
@@ -76,22 +76,33 @@ var HistoryHelper = {
     });
   },
 
-  retrieveFxSyncId(url) {
+  retrieveRecord(url) {
     return this.getDataStore().then((placesStore) => {
       return placesStore.get(url);
-    }).then((placeRecord) => {
+    });
+  },
+
+  retrieveFxSyncId(url) {
+    return this.retrieveRecord(url).then((placeRecord) => {
       return Promise.resolve(placeRecord ? placeRecord.fxsyncId : null);
     });
   },
 
-  addPlaces: function(places) {
+  updateFxSyncId(url, fxsyncId) {
+    return this.retrieveRecord(url).then((placeRecord) => {
+      placeRecord.fxsyncId = fxsyncId;
+      return this._placesStore.put(placeRecord, url);
+    });
+  },
+
+  addPlaces(places) {
     return IAC.request('sync-history', {
       method: 'addPlaces',
       args: [places]
     });
   },
 
-  addPlace: function(place) {
+  addPlace(place) {
     return IAC.request('sync-history', {
       method: 'addPlace',
       args: [place]
@@ -199,7 +210,59 @@ SyncEngine.DataAdapterClasses.history = {
     */
     .then(() => {
       console.log(syncQueueToSync);
-      HistoryHelper.updateLastSyncedStatus();
+      var promises = [];
+      syncQueueToSync.forEach(item => {
+        if (!item.id || !item.data) {
+          return;
+        }
+        if (item.data.fxsyncId) {
+          // update the record.
+          //var editedRecord = {
+          //  id: item.id,
+          //  payload: {
+          //    title: item.data.title,
+          //    histUri: item.data.url,
+          //    visits: []
+          //  }
+          //};
+          //kintoCollection.update(editedRecord).then(result => {
+          //
+          //});
+        } else {
+          // create a new record.
+          var newRecord = {
+            payload: {
+              title: item.data.title,
+              id: null,
+              histUri: item.data.url,
+              visits: []
+            }
+          };
+
+          // Visit Type Constant Definition:
+          // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/
+          //   Reference/Interface/nsINavHistoryService#Constants
+          item.data.visits.forEach(visit => {
+            newRecord.payload.visits.push({
+              date: visit * 1000,
+              type: 2
+            });
+          });
+          kintoCollection.create(newRecord).then(result => {
+            // write fxsyncId in result to PlacesDS.
+            var fxsyncId = result.data.id;
+            var p = HistoryHelper.updateFxSyncId(item.data.url, fxsyncId)
+              .then(() => {
+              result.data.payload.id = fxsyncId;
+              return kintoCollection.update(result.data);
+            });
+            promises.push(p);
+          });
+        }
+      });
+      return Promise.all(promises).then(() => {
+        HistoryHelper.updateLastSyncedStatus();
+      });
     });
   },
   handleConflict(conflict) {
