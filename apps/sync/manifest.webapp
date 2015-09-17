@@ -9,7 +9,7 @@
   },
   "datastores-access": {
     "places": {
-      "readonly": true,
+      "readonly": false,
       "description": "Stores data about browsing history."
     }
   },
