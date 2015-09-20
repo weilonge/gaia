@@ -7,6 +7,7 @@
 /* global
   assert,
   asyncStorage,
+  HistoryHelper,
   requireApp,
   setup,
   sinon,
@@ -49,14 +50,14 @@ var MockIAC = {
 };
 
 window.SyncEngine = {
-  DataAdapterClasses:{}
+  DataAdapterClasses: {}
 };
 
 requireApp('sync/js/adapters/history.js');
 
 suite('sync/adapters/history >', () => {
   const SYNCED_STATUS_MTIME = 'LastSyncedStatus::Collection::mtime';
-  var realIAC, realasyncStorage, testCollectionData, iacRequestSpy;
+  var realIAC, realAsyncStorage, testCollectionData, iacRequestSpy;
   var kintoCollection = {
     list() {
       return Promise.resolve({
@@ -75,7 +76,7 @@ suite('sync/adapters/history >', () => {
     var payload = collectionItem.payload;
     assert.equal(payload.histUri, placesItem.url);
     assert.equal(payload.title, placesItem.title);
-    for(var i = 0; i < payload.visits.length; i++){
+    for (var i = 0; i < payload.visits.length; i++) {
       assert.equal(payload.visits[i].date, placesItem.visits[i] * 1000);
     }
     assert.equal(payload.id, placesItem.fxsyncId);
@@ -102,7 +103,7 @@ suite('sync/adapters/history >', () => {
 
   setup(() => {
     realIAC = window.IAC;
-    realasyncStorage = window.asyncStorage;
+    realAsyncStorage = window.asyncStorage;
     window.IAC = MockIAC;
     window.asyncStorage = MockasyncStorage;
     testCollectionData = [];
@@ -112,7 +113,7 @@ suite('sync/adapters/history >', () => {
   teardown(() => {
     window.IAC = realIAC;
     window.asyncStorage.mTeardown();
-    window.asyncStorage = realasyncStorage;
+    window.asyncStorage = realAsyncStorage;
     iacRequestSpy.restore();
   });
 
@@ -171,4 +172,35 @@ suite('sync/adapters/history >', () => {
     });
   });
 
+  test('HistoryHelper - merge two records', done => {
+    var place1 = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: '',
+      fxsyncId: '',
+      visits: [ 1501000000000, 1502000000000 ]
+    };
+
+    var place2 = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: 'Mozilla',
+      fxsyncId: 'XXXXX_ID_XXXXX',
+      visits: [ 1502000000000, 1503000000000 ]
+    };
+
+    var result = HistoryHelper.mergeRecordsToDataStore(place1, place2);
+    var expectedPlace = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: 'Mozilla',
+      fxsyncId: 'XXXXX_ID_XXXXX',
+      visits: [1503000000000, 1502000000000, 1501000000000]
+    };
+
+    assert.equal(result.title, expectedPlace.title);
+    assert.equal(result.url, expectedPlace.url);
+    assert.equal(result.visits.length, expectedPlace.visits.length);
+    for(var i = 0; i < result.visits.length; i++){
+      assert.equal(result.visits[i], expectedPlace.visits[i]);
+    }
+    done();
+  });
 });

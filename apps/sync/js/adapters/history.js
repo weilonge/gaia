@@ -4,37 +4,109 @@
 
 'use strict';
 
-/* global IAC,
-  SyncEngine
-*/
+/* global SyncEngine */
 
-var HistoryHelper = {
-  set syncedCollectionModifiedTime(mtime) {
-    window.asyncStorage.setItem('LastSyncedStatus::Collection::mtime', mtime);
-  },
-  get syncedCollectionModifiedTime() {
-    return new Promise((resolve, reject) => {
-      window.asyncStorage.
-      getItem('LastSyncedStatus::Collection::mtime', (mtime) => {
-        resolve(mtime);
+const HISTORY_COLLECTION_MTIME = 'LastSyncedStatus::HistoryCollection::mtime';
+
+var HistoryHelper = (() => {
+  var placesStore;
+  function _ensureStore() {
+    if (placesStore) {
+      return Promise.resolve(placesStore);
+    }
+    return new Promise(resolve => {
+      navigator.getDataStores('places').then(stores => {
+        placesStore = stores[0];
+        resolve(placesStore);
       });
     });
-  },
+  }
 
-  addPlaces(places) {
-    return IAC.request('sync-history', {
-      method: 'addPlaces',
-      args: [places]
-    });
-  },
-
-  addPlace(place) {
-    return IAC.request('sync-history', {
-      method: 'addPlace',
-      args: [place]
+  function setSyncedCollectionMtime(mtime) {
+    return new Promise(resolve => {
+      window.asyncStorage.setItem(HISTORY_COLLECTION_MTIME, mtime, resolve);
     });
   }
-};
+
+  function getSyncedCollectionMtime() {
+    return new Promise(resolve => {
+      window.asyncStorage.getItem(HISTORY_COLLECTION_MTIME, resolve);
+    });
+  }
+
+  function mergeRecordsToDataStore(existed, newPlace) {
+    if (existed.url !== newPlace.url) {
+      // The existed record has different url(id) with the new record.
+      throw new Error('Inconsistent records');
+    }
+    if (!existed.fxsyncId) {
+      existed.fxsyncId = newPlace.fxsyncId;
+    } else if(existed.fxsyncId !== newPlace.fxsyncId) {
+      // Two records have different fxSyncId but have the same url(id).
+      throw new Error('Inconsistent records');
+    }
+
+    existed.visits = existed.visits || [];
+    if (existed.visits.length === 0 && newPlace.title) {
+      existed.title = newPlace.title;
+    } else if (newPlace.visits[0] >= existed.visits[0]) {
+      existed.title = newPlace.title;
+    }
+
+    newPlace.visits.forEach(item => {
+      if (existed.visits.indexOf(item) === -1) {
+        existed.visits.push(item);
+      }
+    });
+
+    existed.visits.sort((a, b) => {
+      return b - a;
+    });
+
+    return existed;
+  }
+
+  function addPlace(place) {
+    // 1. get place by url(id of DataStore)
+    // 2.A merge the existed one and new one if it's an existed one,
+    //     and update the places.
+    // 2.B Add a new record with RevisionId.
+
+    var id = place.url;
+    var revisionId;
+    return _ensureStore().then(placesStore => {
+      revisionId = placesStore.revisionId;
+      return placesStore.get(id);
+    }).then(existedPlace => {
+      if (existedPlace) {
+        var newPlace = mergeRecordsToDataStore(existedPlace, place);
+        return placesStore.put(newPlace, id, revisionId);
+      } else {
+        return placesStore.add(place, id, revisionId);
+      }
+    }).catch(e => {
+      console.error(e);
+      return;
+    });
+  }
+
+  function addPlaces(places) {
+    return new Promise(resolve => {
+      places.reduce((cur, next) => {
+        return cur.then(() => {
+          return addPlace(next);
+        });
+      }, Promise.resolve()).then(resolve);
+    });
+  }
+
+  return {
+    mergeRecordsToDataStore: mergeRecordsToDataStore,
+    setSyncedCollectionMtime: setSyncedCollectionMtime,
+    getSyncedCollectionMtime: getSyncedCollectionMtime,
+    addPlaces: addPlaces
+  };
+})();
 
 SyncEngine.DataAdapterClasses.history = {
   _fullSync(kintoCollection, lastModifiedTime) {
@@ -48,24 +120,22 @@ SyncEngine.DataAdapterClasses.history = {
         }
       }
       var partialRecords = historyRecords.slice(0, i);
-      partialRecords.forEach((decryptedRecord) => {
-        var record = decryptedRecord.payload;
-        if (!record.histUri || !record.visits || !record.visits[0]) {
+      if (partialRecords.length === 0) {
+        return Promise.resolve(false);
+      }
+      partialRecords.forEach(record => {
+        var payload = record.payload;
+        if (!payload.histUri || !payload.visits || !payload.visits.length) {
+          console.warn('Incorrect payload? ', JSON.stringify(payload)); // XXX
           return;
         }
 
-        var visits = [];
-        record.visits.forEach((elem) => {
-          visits.push(Math.floor(elem.date / 1000));
+        places.push({
+          url: payload.histUri,
+          title: payload.title,
+          visits: payload.visits.map(elem => Math.floor(elem.date / 1000)),
+          fxsyncId: payload.id
         });
-
-        var place = {
-          url: record.histUri,
-          title: record.title,
-          visits: visits,
-          fxsyncId: record.id
-        };
-        places.push(place);
       });
 
       if (places.length === 0) {
@@ -73,20 +143,17 @@ SyncEngine.DataAdapterClasses.history = {
       }
 
       return HistoryHelper.addPlaces(places).then(() => {
-        if (partialRecords.length > 0) {
-          HistoryHelper.syncedCollectionModifiedTime =
-            partialRecords[0].last_modified;
-        }
-        return Promise.resolve(false);
+        var latestMtime = partialRecords[0].last_modified;
+        return HistoryHelper.setSyncedCollectionMtime(latestMtime).then(() => {
+          Promise.resolve(false);
+        });
       });
     }
 
-    return kintoCollection.list().then(list => {
-      return updateHistoryCollection(list);
-    });
+    return kintoCollection.list().then(updateHistoryCollection);
   },
   update(kintoCollection) {
-    return HistoryHelper.syncedCollectionModifiedTime.then((mtime) => {
+    return HistoryHelper.getSyncedCollectionMtime().then(mtime => {
       return this._fullSync(kintoCollection, mtime);
     });
   },
