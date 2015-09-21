@@ -4,13 +4,21 @@
 
 'use strict';
 
-/* global IAC,
-  SyncEngine
-*/
+/* global SyncEngine */
 
 const HISTORY_COLLECTION_MTIME = 'LastSyncedStatus::HistoryCollection::mtime';
 
 var HistoryHelper = (() => {
+  var placesStore;
+  function _ensureStore() {
+    return new Promise(resolve => {
+      navigator.getDataStores('places').then(stores => {
+        placesStore = stores[0];
+        resolve(placesStore);
+      });
+    });
+  }
+
   function setSyncedCollectionMtime(mtime) {
     return new Promise(resolve => {
       window.asyncStorage.setItem(HISTORY_COLLECTION_MTIME, mtime, resolve);
@@ -23,14 +31,68 @@ var HistoryHelper = (() => {
     });
   }
 
-  function addPlaces(places) {
-    return IAC.request('sync-history', {
-      method: 'addPlaces',
-      args: [places]
+  function mergeRecordsToDataStore(existed, newPlace) { // XXX
+    if (existed.url !== newPlace.url) {
+      return; // XXX throw error.
+    }
+    if (!existed.fxsyncId) {
+      existed.fxsyncId = newPlace.fxsyncId;
+    } else if(existed.fxsyncId !== newPlace.fxsyncId) {
+      return; // XXX throw error.
+    }
+
+    existed.visits = existed.visits || [];
+    if (existed.visits.length === 0 && newPlace.title) {
+      existed.title = newPlace.title;
+    } else if (newPlace.visits[0] >= existed.visits[0]) {
+      existed.title = newPlace.title;
+    }
+
+    newPlace.visits.forEach(item => {
+      if (existed.visits.indexOf(item) === -1) {
+        existed.visits.push(item);
+      }
+    });
+
+    existed.visits.sort((a, b) => {
+      return b - a;
+    });
+
+    return existed;
+  }
+
+  function addPlace(place) { // XXX
+    // 1. get place by url
+    // 2. verify it's an existed one
+    // 3. merge the existed one and new one.
+    // 4. put the record with RevisionId.
+    var id = place.url;
+    var revisionId;
+    return _ensureStore().then(placesStore => {
+      revisionId = placesStore.revisionId;
+      return placesStore.get(id);
+    }).then(existedPlace => {
+      if (existedPlace) {
+        var newPlace = mergeRecordsToDataStore(existedPlace, place);
+        return placesStore.put(newPlace, id, revisionId);
+      } else {
+        return placesStore.add(place, id, revisionId);
+      }
+    });
+  }
+
+  function addPlaces(places) { // XXX
+    return new Promise(resolve => {
+      places.reduce((cur, next) => {
+        return cur.then(() => {
+          return addPlace(next);
+        });
+      }, Promise.resolve()).then(resolve);
     });
   }
 
   return {
+    mergeRecordsToDataStore: mergeRecordsToDataStore,
     setSyncedCollectionMtime: setSyncedCollectionMtime,
     getSyncedCollectionMtime: getSyncedCollectionMtime,
     addPlaces: addPlaces

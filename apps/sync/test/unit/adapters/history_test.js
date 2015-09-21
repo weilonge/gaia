@@ -171,4 +171,35 @@ suite('sync/adapters/history >', () => {
     });
   });
 
+  test('HistoryHelper - merge two records', done => {
+    var place1 = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: '',
+      fxsyncId: '',
+      visits: [ 1501000000000, 1502000000000 ]
+    };
+
+    var place2 = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: 'Mozilla',
+      fxsyncId: 'XXXXX_ID_XXXXX',
+      visits: [ 1502000000000, 1503000000000 ]
+    };
+
+    var result = HistoryHelper.mergeRecordsToDataStore(place1, place2);
+    var expectedPlace = {
+      url: 'http://www.mozilla.org/en-US/',
+      title: 'Mozilla',
+      fxsyncId: 'XXXXX_ID_XXXXX',
+      visits: [1503000000000, 1502000000000, 1501000000000]
+    };
+
+    assert.equal(result.title, expectedPlace.title);
+    assert.equal(result.url, expectedPlace.url);
+    assert.equal(result.visits.length, expectedPlace.visits.length);
+    for(var i = 0; i < result.visits.length; i++){
+      assert.equal(result.visits[i], expectedPlace.visits[i]);
+    }
+    done();
+  });
 });
