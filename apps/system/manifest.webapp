@@ -155,12 +155,6 @@
       "rules": {
         "minimumAccessLevel": "certified"
       }
-    },
-    "sync-history": {
-      "description": "SyncHistory API for Syncto proof of concept",
-      "rules": {
-        "minimumAccessLevel": "certified"
-      }
     }
   },
   "datastores-owned": {

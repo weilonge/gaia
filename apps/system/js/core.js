@@ -126,8 +126,7 @@
             'js/devtools/remote_debugger.js',
             'js/devtools/developer_hud.js',
             'js/devtools/devtools_auth.js',
-            'js/devtools/devtools_auth_dialog.js',
-            'js/sync/sync_iac_api.js'
+            'js/devtools/devtools_auth_dialog.js'
           ])
         ]).then(() => {
           this.remoteDebugger = new RemoteDebugger();
