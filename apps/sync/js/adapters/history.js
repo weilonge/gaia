@@ -90,13 +90,66 @@ var HistoryHelper = (() => {
     });
   }
 
-  function addPlaces(places) {
+  function updatePlaces(places) {
     return new Promise(resolve => {
       places.reduce((cur, next) => {
         return cur.then(() => {
-          return addPlace(next);
+          if (next.deleted) {
+            return deletePlaceByFxSyncId(next.fxsyncId);
+          } else {
+            return addPlace(next);
+          }
         });
       }, Promise.resolve()).then(resolve);
+    });
+  }
+
+  function traverseRecords(each, revisionId) {
+    return _ensureStore().then(placesStore => {
+      return new Promise(resolve => {
+        var cursor = placesStore.sync(revisionId);
+        runNextTask(cursor);
+
+        function runNextTask(cursor) {
+          cursor.next().then(function(task) {
+            manageTask(cursor, task);
+          });
+        }
+
+        function manageTask(cursor, task) {
+          if (task.operation === 'done') {
+            resolve(task);
+            return;
+          }
+          each(task).then(() => {
+            runNextTask(cursor);
+          });
+        }
+      });
+    });
+  }
+
+  function deletePlace(id) {
+    return _ensureStore().then(placesStore => {
+      return placesStore.remove(id);
+    });
+  }
+
+  function deletePlaceByFxSyncId(fxsyncId) {
+    var deletingTask;
+
+    function each(task) {
+      if (task.data && task.data.fxsyncId === fxsyncId) {
+        deletingTask = task;
+      }
+      return Promise.resolve();
+    }
+
+    return traverseRecords(each).then(() => {
+      if (deletingTask) {
+        return deletePlace(deletingTask.id);
+      }
+      return Promise.resolve();
     });
   }
 
@@ -104,7 +157,8 @@ var HistoryHelper = (() => {
     mergeRecordsToDataStore: mergeRecordsToDataStore,
     setSyncedCollectionMtime: setSyncedCollectionMtime,
     getSyncedCollectionMtime: getSyncedCollectionMtime,
-    addPlaces: addPlaces
+    updatePlaces: updatePlaces,
+    deletePlaceByFxSyncId: deletePlaceByFxSyncId
   };
 })();
 
@@ -125,6 +179,13 @@ SyncEngine.DataAdapterClasses.history = {
       }
       partialRecords.forEach(record => {
         var payload = record.payload;
+        if (payload.deleted) {
+          places.push({
+            deleted: true,
+            fxsyncId: payload.id
+          });
+          return;
+        }
         if (!payload.histUri || !payload.visits || !payload.visits.length) {
           console.warn('Incorrect payload? ', JSON.stringify(payload)); // XXX
           return;
@@ -142,7 +203,7 @@ SyncEngine.DataAdapterClasses.history = {
         return Promise.resolve(false);
       }
 
-      return HistoryHelper.addPlaces(places).then(() => {
+      return HistoryHelper.updatePlaces(places).then(() => {
         var latestMtime = partialRecords[0].last_modified;
         return HistoryHelper.setSyncedCollectionMtime(latestMtime).then(() => {
           Promise.resolve(false);
