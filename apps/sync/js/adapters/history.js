@@ -4,7 +4,7 @@
 
 'use strict';
 
-/* global SyncEngine */
+/* global DataAdapters */
 
 const HISTORY_COLLECTION_MTIME = 'LastSyncedStatus::HistoryCollection::mtime';
 
@@ -162,7 +162,7 @@ var HistoryHelper = (() => {
   };
 })();
 
-SyncEngine.DataAdapterClasses.history = {
+DataAdapters.history = {
   _fullSync(kintoCollection, lastModifiedTime) {
     function updateHistoryCollection(list) {
       var historyRecords = list.data;
