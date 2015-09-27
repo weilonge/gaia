@@ -227,7 +227,7 @@ DataAdapters.bookmarks = {
       }
 
       places.push({
-        id: payload.bmkUri,
+        id: payload.id,
         url: payload.bmkUri,
         name: payload.title,
         type: 'url',
