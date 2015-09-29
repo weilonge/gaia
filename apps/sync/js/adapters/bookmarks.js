@@ -6,12 +6,12 @@
   History Data Adapter
 
     The feature of History adapter is to retrieve History records from FxSync
-  Service and merge to Places DataStore which has the same functionality, and
+  Service and merge to Bookmarks DataStore which has the same functionality, and
   the adapter is based on SyncEngine's design to handle 'update' and
   'handleConflict' request. History Data Adapter provides Read-Only version
   currently, and the basic ideas are included:
   - Traverse all records from History Collection (HC).
-  - Add a new or existed place to Places DataStore (PDS).
+  - Add a new or existed place to Bookmarks DataStore (PDS).
     - Convert the records from HC to PDS format.
     - Merge a new record and the existed one then write to PDS.
   - Remove an existed place when receiving a "deleted: true" record.
@@ -92,7 +92,7 @@ var BookmarksHelper = (() => {
     return localRecord;
   }
 
-  function addPlace(place) {
+  function addBookmark(place) {
     // 1. Get place by url(id of DataStore)
     // 2.A Merge the existing one and new one if it's an existing one,
     //     and update the places.
@@ -104,10 +104,10 @@ var BookmarksHelper = (() => {
     return _ensureStore().then(bookmarksStore => {
       revisionId = bookmarksStore.revisionId;
       return bookmarksStore.get(id);
-    }).then(existedPlace => {
-      if (existedPlace) {
-        var newPlace = mergeRecordsToDataStore(existedPlace, place);
-        return bookmarksStore.put(newPlace, id, revisionId);
+    }).then(existedBookmark => {
+      if (existedBookmark) {
+        var newBookmark = mergeRecordsToDataStore(existedBookmark, place);
+        return bookmarksStore.put(newBookmark, id, revisionId);
       }
       return bookmarksStore.add(place, id, revisionId).then(() => {
         return setDataStoreId(place.fxsyncId, id);
@@ -117,20 +117,20 @@ var BookmarksHelper = (() => {
     });
   }
 
-  function updatePlaces(places) {
+  function updateBookmarks(places) {
     return new Promise(resolve => {
       places.reduce((reduced, current) => {
         return reduced.then(() => {
           if (current.deleted) {
-            return deletePlace(current.fxsyncId);
+            return deleteBookmark(current.fxsyncId);
           }
-          return addPlace(current);
+          return addBookmark(current);
         });
       }, Promise.resolve()).then(resolve);
     });
   }
 
-  function deletePlace(fxsyncId) {
+  function deleteBookmark(fxsyncId) {
     var url;
     return getDataStoreId(fxsyncId).then(id => {
       url = id;
@@ -144,8 +144,8 @@ var BookmarksHelper = (() => {
     mergeRecordsToDataStore: mergeRecordsToDataStore,
     setSyncedCollectionMtime: setSyncedCollectionMtime,
     getSyncedCollectionMtime: getSyncedCollectionMtime,
-    updatePlaces: updatePlaces,
-    deletePlace: deletePlace
+    updateBookmarks: updateBookmarks,
+    deleteBookmark: deleteBookmark
   };
 })();
 
@@ -164,7 +164,7 @@ DataAdapters.bookmarks = {
   match in the local DataStore, so we can remove the local record afterwards
   when any deleting record requests with the format [3] are coming from FxSync.
 
-  [1] Records stored in Places DataStore (PDS): {
+  [1] Records stored in Bookmarks DataStore (PDS): {
     "id": "http://mozilla.org/", // KEY in PDS
     "url": "http://mozilla.org/",
     "name": "Mozilla",
@@ -242,7 +242,7 @@ DataAdapters.bookmarks = {
       return Promise.resolve(false);
     }
 
-    return BookmarksHelper.updatePlaces(places).then(() => {
+    return BookmarksHelper.updateBookmarks(places).then(() => {
       var latestMtime = remoteRecords[0].last_modified;
       return BookmarksHelper.setSyncedCollectionMtime(latestMtime);
     }).then(() => {
