@@ -26,6 +26,7 @@
 */
 
 const HISTORY_COLLECTION_MTIME = 'collections::history::mtime';
+const HISTORY_DATASTORE_REVISION_ID = 'datastore::history::revision_id';
 const HISTORY_SYNCTOID_PREFIX = 'SynctoId::history::';
 
 var HistoryHelper = (() => {
@@ -49,6 +50,24 @@ var HistoryHelper = (() => {
   function getSyncedCollectionMtime() {
     return new Promise(resolve => {
       asyncStorage.getItem(HISTORY_COLLECTION_MTIME, resolve);
+    });
+  }
+
+  function setSyncedDsRevisionId(revisionId) {
+    return new Promise(resolve => {
+      asyncStorage.setItem(HISTORY_DATASTORE_REVISION_ID, revisionId, resolve);
+    });
+  }
+
+  function getSyncedDsRevisionId() {
+    return new Promise(resolve => {
+      asyncStorage.getItem(HISTORY_DATASTORE_REVISION_ID, resolve);
+    });
+  }
+
+  function updateLastSyncedStatus() {
+    return _ensureStore().then(store => {
+      return setSyncedDsRevisionId(store.revisionId);
     });
   }
 
@@ -157,11 +176,51 @@ var HistoryHelper = (() => {
     });
   }
 
+  function syncDataStore(revisionId) {
+    return new Promise((resolve, reject) => {
+      var cursor, tasks = [];
+      _ensureStore().then(store => {
+        cursor = store.sync(revisionId);
+        runNextTask(cursor);
+      });
+
+      function runNextTask(cursor) {
+       cursor.next().then(function(task) {
+         manageTask(cursor, task);
+       });
+      }
+
+      function manageTask(cursor, task) {
+        tasks.push(task);
+        if (task.operation == 'done') {
+          // Finished adding contacts!
+          resolve(tasks);
+          return;
+        }
+        runNextTask(cursor);
+      }
+    });
+  }
+
+  function updateFxSyncId(url, fxsyncId) {
+    return _ensureStore().then(() => {
+      return placesStore.get(url);
+    }).then((placeRecord) => {
+      placeRecord.fxsyncId = fxsyncId;
+      return placesStore.put(placeRecord, url);
+    });
+  }
+
   return {
     mergeRecordsToDataStore: mergeRecordsToDataStore,
     setSyncedCollectionMtime: setSyncedCollectionMtime,
     getSyncedCollectionMtime: getSyncedCollectionMtime,
+    setSyncedDsRevisionId: setSyncedDsRevisionId,
+    getSyncedDsRevisionId: getSyncedDsRevisionId,
+    updateLastSyncedStatus: updateLastSyncedStatus,
+    syncDataStore: syncDataStore,
     updatePlaces: updatePlaces,
+    updateFxSyncId: updateFxSyncId,
     deletePlace: deletePlace
   };
 })();
@@ -272,16 +331,126 @@ DataAdapters.history = {
   },
 
   update(remoteHistory, options = { readonly: true }) {
-    if (!options.readonly) {
-      console.warn('Two-way sync not implemented yet for bookmarks.');
-    }
-    var mtime;
+    var mtime, syncQueueToSync;
     return LazyLoader.load(['shared/js/async_storage.js'])
+
+    /* Step 1:
+      Retrieve the changes in Places Data Store by using DataStore.sync() and
+      cache the results to SyncQueue.
+    */
+    .then(HistoryHelper.getSyncedDsRevisionId)
+    .then(HistoryHelper.syncDataStore)
+    .then(tasks => {
+      syncQueueToSync = tasks;
+    })
+
+    /* Step 2:
+      Write History Collection records to PlacesDS.
+    */
     .then(HistoryHelper.getSyncedCollectionMtime).then(_mtime => {
       mtime = _mtime;
       return remoteHistory.list();
     }).then(list => {
       return this._update(list.data, mtime);
+    })
+
+    /* Step 3:
+      Update FxSync ID of records in SyncQueueToSync for updating records to
+      History Collection. There will be two cases for these records:
+        1. No FxSync ID exists, and it means it's a new record.
+        2. FxSync ID exists, and it means the record should be updated to the
+           record with the same ID.
+
+      Besides, case 2 will only happen at the first time sync because the
+      records from PlacesDS are without FxSync ID before writing the data from
+      FxSync. After the first time sync, every record in PlacesDS has their own
+      FxSync ID.
+    */
+    .then(() => {
+      var promises = [];
+
+      if (!syncQueueToSync) {
+        return Promise.resolve();
+      }
+
+      syncQueueToSync.forEach((syncingItem, index) => {
+        var url = syncingItem.id;
+        if (!url) {
+          return;
+        }
+        if (syncingItem.data.fxsyncId) {
+          return;
+        }
+        var p = this._retrieveFxSyncId(url).then((fxsyncId) => {
+          syncingItem.data.fxsyncId = fxsyncId;
+        });
+        promises.push(p);
+      });
+
+      return Promise.all(promises);
+    })
+
+    /* Step 4:
+      Push all waiting-for-syncing records to FxSync and update last synced
+      revision id.
+    */
+    .then(() => {
+      console.log(syncQueueToSync);
+      var promises = [];
+      if (!syncQueueToSync) {
+        return Promise.resolve();
+      }
+      syncQueueToSync.forEach(item => {
+        if (!item.id || !item.data) {
+          return
+        }
+        if (item.data.fxsyncId) {
+          // update the record.
+          var editedRecord = {
+            id: item.id,
+            payload: {
+              title: item.data.title,
+              histUri: item.data.url,
+              visits: []
+            }
+          };
+          //remoteHistory.update(editedRecord).then(result => {
+          //
+          //});
+        } else {
+          // create a new record.
+          var newRecord = {
+            payload: {
+              title: item.data.title,
+              id: null,
+              histUri: item.data.url,
+              visits: []
+            }
+          };
+
+          // Visit Type Constant Definition:
+          // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/
+          //   Reference/Interface/nsINavHistoryService#Constants
+          item.data.visits.forEach(visit => {
+            newRecord.payload.visits.push({
+              date: visit * 1000,
+              type: 2
+            });
+          });
+          remoteHistory.create(newRecord).then(result => {
+            // write fxsyncId in result to PlacesDS.
+            var fxsyncId = result.data.id, url = item.data.url;
+            var p = HistoryHelper.updateFxSyncId(url, fxsyncId).then(() => {
+              result.data.payload.id = fxsyncId;
+              return remoteHistory.update(result.data);
+            });
+            promises.push(p);
+          });
+        }
+      });
+      return Promise.all(promises).then(() => {
+        return HistoryHelper.updateLastSyncedStatus();
+      });
     });
   },
 
