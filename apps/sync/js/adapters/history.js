@@ -245,8 +245,15 @@ DataAdapters.history = {
         });
         continue;
       }
-      if (!payload.histUri || !payload.visits || !payload.visits.length) {
+      if (!payload.histUri || !payload.visits) {
         console.warn('Incorrect payload? ', payload);
+        continue;
+      }
+      if (!payload.visits.length) {
+        places.push({
+          deleted: true,
+          fxsyncId: payload.id
+        });
         continue;
       }
 
