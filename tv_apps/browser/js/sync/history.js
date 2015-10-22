@@ -79,8 +79,13 @@ var SyncHistory = (function () {
     return syncDataStore.unregisterStoreChangeEvent();
   }
 
+  function clear() {
+    return SyncBrowserDB.clearHistoryDeep();
+  }
+
   return {
     start: start,
-    stop: stop
+    stop: stop,
+    clear: clear
   };
 })();

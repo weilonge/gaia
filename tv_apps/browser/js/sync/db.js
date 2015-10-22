@@ -434,6 +434,22 @@ var SyncBrowserDB = {
     // Get a list of bookmarks
     this.db.clearHistoryExcluding(callback);
 
+  },
+
+  clearBookmarks: function browserDB_clearBookmarks(callback) {
+    return new Promise(resolve => {
+      this.db.clearBookmarks(resolve);
+    });
+  },
+
+  clearHistoryDeep: function browserDB_clearHistoryDeep() {
+    return new Promise(resolve => {
+      this.db.clearVisits(resolve);
+    }).then(new Promise(resolve => {
+      this.db.clearPlaces(resolve);
+    })).then(new Promise(resolve => {
+      this.db.clearIcons(resolve);
+    }));
   }
 
 };

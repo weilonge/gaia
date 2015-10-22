@@ -100,8 +100,13 @@ var SyncBookmark = (function () {
     return syncDataStore.unregisterStoreChangeEvent();
   }
 
+  function clear() {
+    return SyncBrowserDB.clearBookmarks();
+  }
+
   return {
     start: start,
-    stop: stop
+    stop: stop,
+    clear: clear
   };
 })();
