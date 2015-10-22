@@ -17,6 +17,7 @@ var Awesomescreen = {
   DEFAULT_TAB_ADD: 'style/images/add-tab.svg',
   DEFAULT_SCREENSHOT: 'style/images/mozilla_screenshot.png',
   DEFAULT_BOOKMARK: 'Bookmark',
+  FIREFOX_SYNC_BOOKMARK: 'Firefox_Sync_Bookmark',
   DEFAULT_HISTORY: 'History',
   DEFAULT_TABVIEW: 'Tabview',
   DEFAULT_TAB_DELETE: 'TabDelete',
@@ -155,18 +156,16 @@ var Awesomescreen = {
       }
     }).bind(this));
 
-    this.bookmark.addEventListener('itemUpdated', (function(e){
-      BookmarkStore.updateCache();
-      this.dialogHidden();
-    }).bind(this));
-
-    this.bookmark.addEventListener('itemRemoved', (function(e){
-      BookmarkStore.updateCache();
+    this.bookmark.addEventListener('hideDialog', (function(e){
       this.dialogHidden();
     }).bind(this));
 
     this.bookmark.addEventListener('showSubMenu', (function(e){
-      this.optionDialogOpen(this.DEFAULT_BOOKMARK);
+      if(e.detail.readOnly === 'true') {
+        this.optionDialogOpen(this.FIREFOX_SYNC_BOOKMARK);
+      } else {
+        this.optionDialogOpen(this.DEFAULT_BOOKMARK);
+      }
     }).bind(this));
 
     this.bookmark.addEventListener('displayWebsite', (function(e){
@@ -282,6 +281,10 @@ var Awesomescreen = {
    * close all awesomescreen screen
    */
   allHidden: function awesomescreen_allHidden() {
+    if(this.bookmarkList.isDisplay()) {
+      this.bookmarkList.close();
+    }
+
     if(this.isDisplayedList()){
       this.listHidden();
     }
@@ -655,7 +658,13 @@ var Awesomescreen = {
    * Select the Bookmarks tab.
    */
   selectBookmarksTab: function awesomescreen_selectBookmarksTab() {
-    BookmarkStore.updateCache(this.bookmarkList.open.bind(this.bookmarkList));
+    BookmarkStore.reset(
+      function(){
+        BookmarkStore.updateCache(
+          this.bookmarkList.open.bind(this.bookmarkList)
+        );
+      }.bind(this)
+    );
   },
 
   /**
@@ -1341,6 +1350,14 @@ var Awesomescreen = {
         this.elementSetTabindex(elementIDs);
         break;
 
+      case this.FIREFOX_SYNC_BOOKMARK:
+        elementIDs = [this.pinhomeButton];
+        this.focusList.push(this.pinhomeButton);
+        this.focusPos = 0;
+        this.elementSetDisplayBlock(elementIDs);
+        this.elementSetTabindex(elementIDs);
+        break;
+
       case this.DEFAULT_HISTORY:
         elementIDs = [this.pinhomeButton, this.clhistoryButton,
                       this.removeButton];
@@ -1737,7 +1754,11 @@ var Awesomescreen = {
       if(this.bookmarkList.isDisplay()) {
         BrowserDB.removeBookmark(
           listUrl,
-          this.bookmarkList.removeFocusItem.bind(this.bookmarkList)
+          function(){
+            BookmarkStore
+              .updateCache(
+                this.bookmarkList.removeFocusItem.bind(this.bookmarkList));
+          }.bind(this)
         );
       } else if(Awesomescreen.isDisplayedHistory()){
         BrowserDB.removeHistory(
@@ -1777,7 +1798,13 @@ var Awesomescreen = {
       BrowserDB.updateBookmark(
         listUrl,
         bmTitle,
-        this.bookmarkList.updateFocusItemTitle.bind(this.bookmarkList, bmTitle)
+        function(){
+          BookmarkStore
+            .updateCache(
+              this
+                .bookmarkList
+                  .updateFocusItemTitle.bind(this.bookmarkList, bmTitle));
+        }.bind(this)
       );
     }).bind(this);
     target.addEventListener('transitionend', end_event, false);
@@ -1973,6 +2000,12 @@ var Awesomescreen = {
     var title  = '';
 
     switch(true) {
+      case this.bookmarkList.isDisplay():
+        this.showAwesomeLoadingIcon();
+        url = this.bookmarkList.getFocusItemUri();
+        this.pintohomeTitle = this.bookmarkList.getFocusItemTitle();
+        this.callAwesomescreenEvents(url);
+        break;
       case this.isDisplayedList() :
         this.showAwesomeLoadingIcon();
         url = this.selectList.childNodes[1].childNodes[1].textContent;
