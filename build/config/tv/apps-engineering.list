@@ -14,7 +14,7 @@ tv_apps/weather-widget
 tv_apps/fling-tutorial
 tv_apps/tv-ftu
 tv_apps/webapps
-apps/bluetooth
+apps/sync
 apps/calendar
 apps/camera
 apps/clock
@@ -22,11 +22,7 @@ apps/email
 apps/fl
 apps/gallery
 apps/keyboard
-apps/music
-apps/pdfjs
-apps/video
-apps/wallpaper
-apps/marketplace.firefox.com
+apps/settings
 outoftree_apps/*
 dev_apps/test-agent
 dev_apps/uitest

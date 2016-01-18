@@ -1,3 +1,4 @@
+/* global SpatialNavigationHelper */
 define(function(require) {
   'use strict';
 
@@ -116,6 +117,8 @@ define(function(require) {
           }
 
           self._scanning = false;
+
+          SpatialNavigationHelper.makeFocusable();
         };
 
         req.onerror = function onScanError(error) {
@@ -125,6 +128,8 @@ define(function(require) {
           window.performance.measure('settingsPanelWifiReady', 'wifiListStart');
 
           window.setTimeout(self.scan.bind(self), self._scanRate);
+
+          SpatialNavigationHelper.makeFocusable();
         };
       },
       getWpsAvailableNetworks: function() {
