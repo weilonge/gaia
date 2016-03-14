@@ -30,6 +30,8 @@ limitations under the License.
   DataAdapters
 */
 
+var SYNC_DEBUG = {};
+
 var DataAdapters = {
   // To be filled by js/adapters/*.js
 };
@@ -102,6 +104,7 @@ const Bootstrap = (() => {
         assertion: request.assertion,
         adapters: DataAdapters
       });
+      SYNC_DEBUG.syncEngine = syncEngine;
 
       return syncEngine.syncNow(request.collections);
     }).then(() => {
@@ -139,7 +142,7 @@ const Bootstrap = (() => {
           sendPortMessage({
             id: request.id
           });
-          window.close();
+          //window.close();
         }).catch(error => {
           DEBUG('Sync request error', error.message || error.name || error);
           sendPortMessage({
